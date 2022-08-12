@@ -1,7 +1,13 @@
 ---
-title: "title"
+title: "As Crônicas da Sobrevivência"
 author: "author"
-abstract: "abstract"
+abstract: "A maioria das análises utilizando esse banco de dados remove
+as observações que não tiverem o evento de interesse, isso evidentemente é uma 
+ação equivocada pois tais observações também carregam informações pertinentes, 
+o que é desenvolvido aqui portanto é uma análise de sobrevivência onde avaliamos
+as funções de sobrevivência para as as variáveis selecionadas, juntamente com um
+modelo de regressão de Cox para avaliar influência das covariáveis no tempo de
+sobrevivência"
 header-includes:
    - \usepackage[brazil]{babel}
    - \usepackage{bm}
@@ -21,7 +27,7 @@ indent: true
 options(digits=3)  #Arrendodamento
 options(scipen=999)
 ggplot2::theme_set(ggplot2::theme_minimal()) #Tema dos gráficos produzidos no ggplot2
-knitr::opts_chunk$set(echo=F,message=F,warning=F,fig.pos = 'H',fig.align = 'center',fig.width=6, fig.height=4.0)
+knitr::opts_chunk$set(echo=F,message=F,warning=F,fig.pos = 'H',fig.align = 'center',fig.width=6, fig.height=3.7)
 scale_fill_discrete = \(...) ggplot2::scale_fill_brewer(... , palette="Set2") #Fixa a scale do fill dos gráficos do ggplot2
 
 ```
@@ -33,7 +39,7 @@ library(patchwork)
 library(ggfortify)
 library(survminer)
 
-plot_surv = function(ekm, ci= T){
+plot_surv = function(ekm, ci = T){
   autoplot(ekm, conf.int = ci) +
   labs(y = 'Sobrevivência estimada', 
        x = 'tempo')
@@ -62,7 +68,7 @@ Vamos nesse breve ensaio fazer uma análise de sobrevivência estatística dos p
 # Análise de Sobrevivência
 
 A análise de sobrevivência difere dos métodos estatísticos clássicos pois temos dados censuradas, que são observações  a qual o evento de interesse por algum motivo não pode ser obtido. 
-Aqui o nosso evento de interesse é o tempo para morte de um personagem, e se o personagem não faleceu, será classificado como censurado e seu respectivo tempo de censura será o último livro que apareceu. Assim nossa variável tempo ($T$) possui somente 5 valores possíveis, que são respectivamente a numeração dos livros.
+Aqui o nosso evento de interesse é o **tempo para morte** de um personagem, e se o personagem não faleceu, será classificado como censurado, e seu respectivo tempo de censura será o último livro que apareceu. Assim nossa variável tempo ($T$) possui somente 5 valores possíveis, que são respectivamente a numeração dos livros.
 
 
 # Metodologia da criação do banco de dados
@@ -73,7 +79,7 @@ As crônicas de gelo e fogo possui uma quantidade enorme de personagens, assim f
 
 Como dito antes G possui muitos personagens, e também muitas associações, assim é interessante avaliarmos a quantidade de indivíduos em cada família, como também a quantidade de mortos respectivamente
 
-```{r, fig.cap="Comparação entre quantidade de membros nas associações e mortos"}
+```{r, fig.width=6.7,fig.cap="Comparação entre quantidade de membros nas associações e mortos"}
 
 
 death = df |>    #where are you?
@@ -89,10 +95,12 @@ death |>
   ggplot(aes(Allegiances, total, fill = Allegiances)) + 
   geom_bar(stat = 'identity') + 
   coord_flip() +
+  theme(legend.position = "none") +
 death |> 
   ggplot(aes(Allegiances, prop, fill = Allegiances)) + 
   geom_bar(stat = 'identity') + 
-  coord_flip()
+  coord_flip() +
+  theme(legend.position = "none")
 
 
 ```
@@ -120,27 +128,28 @@ A função de sobrevivência ($S$) nos informa qual a probabilidade de uma obser
 ## Estimando a sobrevivência
 Sabemos que a proporção de personagens do sexo feminino é de apenas aproximadamente $16$%, assim uma pergunta a se fazer é se existe diferença na sobrevivência entre os sexos
 
-```{r, fig.cap="Função de Sobrevivência para ambos os sexos"}
+```{r survs, fig.cap="Função de sobrevivência estimada para ambos os sexos"}
 survfit(Surv(time_death, status) ~ Gender, 
               data = df) |> 
   plot_surv()
 ```
-Assim o que a figura NN nos fornece indicios de  que existe diferença no tempo de sobrevivência entre os sexos, pois a curva estimada de $S$ para o sexo feminino está pontualmente superior que a do sexo masculino para todos os tempos, e mesmo em termos de intervalos de confiança existe pouca interseção.
+Assim, a figura NN nos fornece indicios de  que existe diferença no tempo de sobrevivência entre os sexos, pois a curva estimada de $S$ para o sexo feminino está pontualmente superior que a do sexo masculino para todos os tempos, e mesmo em termos de intervalos de confiança existe pouca interseção.
 
 
 
 Também é importante verificar se existe diferença nas funções de sobrevivência 
-para a classe social do personagem, pela figura
+para a classe social do personagem, o que pode ser visto pela figura NN
 ```{r}
 survfit(Surv(time_death, status) ~ Nobility, 
               data = df) |> 
   plot_surv()
 ```
 
-Como é de se esperar personagens que são nobres tem uma sobrevivência maior
+Como é de se esperar, personagens que são de uma família nobre tem uma sobrevivência estimada superior que os que são de família comum.
 
-Podemos avaliar também a interação da classe social e sexo, o que pode ser visto
-pela figura
+Dado que as figuras NN e NN indicaram diferença no tempo de sobrevivência para 
+sexo e nobreza, é importante se perguntar se a interação entre esses  grupos 
+mantém tal diferença, o que pode ser avaliado pela figura NN
 
 ```{r}
 survfit(Surv(time_death, status) ~ Nobility + Gender, 
@@ -151,20 +160,45 @@ survfit(Surv(time_death, status) ~ Nobility + Gender,
 ```
 
 Nota-se portanto que o comportamento individual das variáveis se mantém nas 
-interações, pois para cada sexo a classe social a sobrevivência com valores
-superiores é sempre a da Nobreza, nesse mesmo sentido até o sexo feminino da classe
+interações, pois para cada sexo a classe social, a sobrevivência com valores
+superiores é sempre a da Nobreza, nesse mesmo sentido até mesmo o sexo feminino da classe
 comum possui maior taxa de sobrevivência que a do sexo masculino nobre.
 
 
 
-Faz-se então importante realizarmos um teste de hipótese para avaliar tal afirmação, aqui vamos utilizar o teste log rank, onde em termos gerais possui a seguinte hipótese
+Faz-se então importante realizarmos um teste de hipótese para avaliar as consequências
+anteriores, aqui vamos utilizar o teste log-rank, onde em termos gerais possui a seguinte hipótese. O p-valor do teste para cada grupo é indicado pela tabela TT
 $$
 H_0: \text{As funções de sobrevivências dos grupos são iguais.} 
 $$
+```{r}
 
-As analisea anteriores são pertinentes para a seleção das covariáveis do modelo
+extract_pvalue = function(df, time = time_death, 
+                           status = status, group){
+  test_nob = survdiff(Surv(time, status) ~ group, rho=0, data = df)
+  1-pchisq(test_nob$chisq, 1)
+}
+
+```
+
+
+```{r}
+test_nob = survdiff(Surv(time_death, status) ~ Nobility, rho=0, data = df)
+test_gender = survdiff(Surv(time_death, status) ~ Gender, rho=0, data = df)
+
+  
+variable = c("Genêro", "Nobreza")
+pvalue = c(1-pchisq(test_gender$chisq, 1),1-pchisq(test_nob$chisq, 1))
+
+data.frame(variable, pvalue) |> 
+  mutate(pvalue = format.pval(pvalue, eps = 0.01)) |> 
+  mypdf1::pdf1_tbl("P-valores fornecidos pelo teste log-rank")
+```
+
+As analises anteriores são pertinentes para a seleção das covariáveis do modelo
 de regressão, pois como vimos existem evidências de diferença nas funções de 
-sobrevivência nesse grupos.
+sobrevivência nesse grupos, ou seja dependendendo do grupo a qual o personagem
+está situado seu tempo de sobrevivência pode ser diferente.
 
 
 # Escolha de um modelo paramétrico
@@ -197,8 +231,7 @@ l =  cox.zph(fit, transform="identity")
 
 ```
 
-Assim temos como p-valor associado ao teste 0.067, 0.879 e 0.88 para as variáveis Genêro, Nobreza
-e e interação entre elas, respectivamente. Portanto indicando que não existem indícios
+Assim temos como p-valor associado ao teste 0.067, 0.879  para as variáveis Genêro, Nobreza, respectivamente. Portanto indicando que não existem indícios
 de falha no pressuposto.
 
 Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico
