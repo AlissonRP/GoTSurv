@@ -1,7 +1,7 @@
 ---
 title: "As Crônicas da Sobrevivência"
 author: "author"
-abstract: "A maioria das análises utilizando esse banco de dados remove
+abstract: "A maioria das análises empregando o banco de dados  aqui utilizado remove
 as observações que não tiverem o evento de interesse, isso evidentemente é uma 
 ação equivocada pois tais observações também carregam informações pertinentes, 
 o que é desenvolvido aqui portanto é uma análise de sobrevivência onde avaliamos
@@ -12,13 +12,21 @@ header-includes:
    - \usepackage[brazil]{babel}
    - \usepackage{bm}
    - \usepackage{float}
-geometry: left=1.7cm, right=1.7cm, top=3cm, bottom=3cm
+geometry: left=1.7cm, right=1.7cm, top=2.5cm, bottom=2.5cm
 output:
   bookdown::pdf_document2:
 editor_options:
   chunk_output_type: console
 indent: true
+toc: True
+bibliography: bib.bib 
+csl: style.csl
+nocite: '@*'
+link-citations: true
 ---
+
+\clearpage
+
 
 
 
@@ -27,8 +35,8 @@ indent: true
 options(digits=3)  #Arrendodamento
 options(scipen=999)
 ggplot2::theme_set(ggplot2::theme_minimal()) #Tema dos gráficos produzidos no ggplot2
-knitr::opts_chunk$set(echo=F,message=F,warning=F,fig.pos = 'H',fig.align = 'center',fig.width=6, fig.height=3.7)
-scale_fill_discrete = \(...) ggplot2::scale_fill_brewer(... , palette="Set2") #Fixa a scale do fill dos gráficos do ggplot2
+knitr::opts_chunk$set(echo=F,message=F,warning=F,fig.pos = 'H',fig.align = 'center',fig.width=6, fig.height=3.3)
+#scale_fill_discrete = \(...) ggplot2::scale_fill_brewer(... , palette="Set2") #Fixa a scale do fill dos gráficos do ggplot2
 
 ```
 
@@ -55,31 +63,38 @@ df = read_csv('gotsurv.csv') |>
 ```
 # Introdução
 
-As Crônicas de Gelo e Fogo (no original em inglês: A Song of Ice and Fire) é uma série de livros de fantasia épica escrita pelo romancista e roteirista norte-americano George R. R. Martin e publicada pela editora Bantam Spectra. Martin começou a desenvolvê-la em 1991 e o primeiro volume foi lançado em 1996. Originalmente concebida para ser uma trilogia, a saga agora consiste em cinco volumes publicados, com mais dois planejados. Há também três contos derivados e algumas novelas que consistem de resumos dos romances principais.
+As Crônicas de Gelo e Fogo  é uma série de livros de fantasia épica escrita pelo romancista e roteirista norte-americano George R. R. Martin. Martin começou a desenvolvê-la em 1991 e o primeiro volume foi lançado em 1996. Originalmente concebida para ser uma trilogia, a saga agora (2022) consiste em cinco volumes publicados, com mais dois planejados. Há também três contos derivados e algumas novelas que consistem de resumos dos romances principais.
 
-Há três argumentos principais na história, que se tornam cada vez mais interligados: a crônica de uma guerra civil dinástica entre várias famílias concorrentes pelo controle dos Sete Reinos; a ameaça crescente das criaturas sobrenaturais conhecidas como os Outros, que habitam além de uma imensa muralha de gelo ao Norte; e a ambição de Daenerys Targaryen, a filha exilada de um rei assassinado em uma outra guerra civil treze anos antes, prestes a voltar à sua terra e reivindicar seu trono de direito.
+Há três argumentos principais na história, que se tornam cada vez mais interligados: a crônica de uma guerra civil dinástica entre várias famílias concorrentes pelo controle dos Sete Reinos; a ameaça crescente das criaturas sobrenaturais, que habitam além de uma imensa muralha de gelo ao Norte; e a ambição de Daenerys Targaryen, a filha exilada de um rei assassinado em uma outra guerra civil treze anos antes, prestes a voltar à sua terra e reivindicar seu trono de direito.
 
 
 
 Os livros de As Crônicas de Gelo e Fogo foram adaptados para diversos formatos, como jogos de videogame, histórias em quadrinhos, bonecos em miniatura e uma série de TV intitulada Game of Thrones. A atração televisiva apresentou a saga a um maior número de leitores e lhe trouxe maior notoriedade, fazendo com que os quatro primeiros volumes da série surgissem entre os dez primeiros colocados na referencial lista de mais vendidos do jornal norte-americano The New York Times em 2011. 
 
+O banco de dados aqui utilizado está disponível no [kaggle](https://www.kaggle.com/datasets/mylesoneill/game-of-thrones?select=character-deaths.csv).
 Vamos nesse breve ensaio fazer uma análise de sobrevivência estatística dos personagens dos livros.
 
-# Análise de Sobrevivência
+# Análise Inicial
 
-A análise de sobrevivência difere dos métodos estatísticos clássicos pois temos dados censuradas, que são observações  a qual o evento de interesse por algum motivo não pode ser obtido. 
-Aqui o nosso evento de interesse é o **tempo para morte** de um personagem, e se o personagem não faleceu, será classificado como censurado, e seu respectivo tempo de censura será o último livro que apareceu. Assim nossa variável tempo ($T$) possui somente 5 valores possíveis, que são respectivamente a numeração dos livros.
+## Análise de Sobrevivência
+
+A análise de sobrevivência difere dos métodos estatísticos clássicos pois temos dados censurados, que são observações  a qual o evento de interesse por algum motivo não pode ser mensurado. 
+Aqui o nosso evento de interesse é o **tempo para morte** de um personagem, e se o personagem não faleceu, será classificado como censurado, e seu respectivo tempo de censura será o último livro que apareceu. Assim, nossa variável tempo ($T$) possui somente 5 valores possíveis, que são respectivamente a numeração dos livros.
 
 
-# Metodologia da criação do banco de dados
+## Metodologia da criação do banco de dados
 
-As crônicas de gelo e fogo possui uma quantidade enorme de personagens, assim fica claro que o número de personagens que morre é muito menor que os que não morrem, portanto foi removido da análise todos os personagens que não estavam associados a alguma família relevante ^[Onde relevante é definido arbitrariamente pelo  autor que vos escreve].
+As crônicas de gelo  e fogo apesar de possuir "apenas" 5 livros é uma obra extensa 
+possuindo uma quantidade enorme de personagens, dessa maneira fica claro que o número de personagens que morre é muito menor que os que não morrem, portanto para coesão 
+da análise foi removido  todos os indivíduos que não estavam associados a alguma família relevante ^[Onde relevante é definido arbitrariamente pelo  autor que vos escreve].
+O banco de dados em sua forma "original" não está pronto para a análise de sobrevivência, pois é necessário uma variável que informe se  o tempo observado foi de censura ou do evento de interesse, assim essa variável foi construída para análise, onde o banco modificado pode ser encontrado [aqui](https://github.com/AlissonRP/SURV/blob/master/data/gotsurv.csv).
 
-# Análise Básica
+## Análise Descritiva
 
-Como dito antes G possui muitos personagens, e também muitas associações, assim é interessante avaliarmos a quantidade de indivíduos em cada família, como também a quantidade de mortos respectivamente
+Como temos muitos personagens, também temos uma quantidade considerável de 
+associações^[No texto, associações na maior parte refere-se a famílias, porém existem também associações a quais não são famílias], assim é interessante avaliarmos a quantidade de indivíduos dentro dessas associações, como também a quantidade de mortos respectivamente.
 
-```{r, fig.width=6.7,fig.cap="Comparação entre quantidade de membros nas associações e mortos"}
+```{r, fig.width=6.9, fig.height=3.7, fig.subcap=c('(a)', '(b)', '(c)')}
 
 
 death = df |>    #where are you?
@@ -92,13 +107,15 @@ inner_join(df |>
   mutate(prop = mortos / total)
 
 death |> 
-  ggplot(aes(Allegiances, total, fill = Allegiances)) + 
+  ggplot(aes(reorder(Allegiances, total) , y = total, fill = Allegiances)) + 
   geom_bar(stat = 'identity') + 
   coord_flip() +
+  labs(y = "Total", x = "Associações") + 
   theme(legend.position = "none") +
 death |> 
-  ggplot(aes(Allegiances, prop, fill = Allegiances)) + 
+  ggplot(aes(reorder(Allegiances, prop), y = prop, fill = Allegiances)) + 
   geom_bar(stat = 'identity') + 
+  labs(y = "Proporção", x = "") + 
   coord_flip() +
   theme(legend.position = "none")
 
@@ -145,7 +162,7 @@ survfit(Surv(time_death, status) ~ Nobility,
   plot_surv()
 ```
 
-Como é de se esperar, personagens que são de uma família nobre tem uma sobrevivência estimada superior que os que são de família comum.
+Como é de se esperar ^[Warui kizoku wo yattsukero da - Moriarty], personagens que são de uma família nobre tem uma sobrevivência estimada superior que os que são de família comum.
 
 Dado que as figuras NN e NN indicaram diferença no tempo de sobrevivência para 
 sexo e nobreza, é importante se perguntar se a interação entre esses  grupos 
@@ -162,7 +179,7 @@ survfit(Surv(time_death, status) ~ Nobility + Gender,
 Nota-se portanto que o comportamento individual das variáveis se mantém nas 
 interações, pois para cada sexo a classe social, a sobrevivência com valores
 superiores é sempre a da Nobreza, nesse mesmo sentido até mesmo o sexo feminino da classe
-comum possui maior taxa de sobrevivência que a do sexo masculino nobre.
+comum possui maior taxa de sobrevivência que a do sexo masculino nobre ^[Contexto **importa**:A figura NN sem contexto pode facilmente tornar-se "como mentir com estatística"].
 
 
 
@@ -195,26 +212,26 @@ data.frame(variable, pvalue) |>
   mypdf1::pdf1_tbl("P-valores fornecidos pelo teste log-rank")
 ```
 
-As analises anteriores são pertinentes para a seleção das covariáveis do modelo
+As análises anteriores são pertinentes para a seleção das covariáveis do modelo
 de regressão, pois como vimos existem evidências de diferença nas funções de 
-sobrevivência nesse grupos, ou seja dependendendo do grupo a qual o personagem
+sobrevivência nesse grupos, em outras palavras dependendendo do grupo a qual o personagem
 está situado seu tempo de sobrevivência pode ser diferente.
 
 
 # Escolha de um modelo paramétrico
 
 
-# Análise das mortes por variáveis
 
 
-## Modelos de Regressão
-Vamos nessa seção ajustar um modelo de regressão de Cox, texto e texto,... Onde 
-vamos utilizar como covariáveis, o genêro do personagem, se é da nobreza, e a 
-interação entre essas duas covariáveis. Assim devemos primeiro realizar um teste
+
+## Modelo de Regressão de Cox
+Vamos nessa seção ajustar um modelo de regressão de Cox a qual foi 
+introduzido pela primeira vez em @cox1972regression. Onde 
+vamos utilizar como covariáveis, o genêro do personagem e se é da nobreza, porém antes de ajustar o modelo precisamos verificar se o pressuposto de taxa de falha proporcionais não foi quebrado. Dessa maneira devemos primeiro realizar um teste
 para verificar se existem evidências de não proporcionalidade, em termos gerais
 o teste possui a seguinte hipótese:
 $$
-\text{Os riscos são proporcionais}
+H_0: \text{Os riscos são proporcionais}
 $$
 
 
@@ -222,8 +239,7 @@ $$
 
 
 
-Pelo gráfico podemos notar que talvez a interação não tenha tanta influência na
-sobrevivência
+
 ```{r}
 fit<-coxph(Surv(time_death, status) ~ Gender + Nobility , data = df, x=T, method="breslow")
 
@@ -231,7 +247,7 @@ l =  cox.zph(fit, transform="identity")
 
 ```
 
-Assim temos como p-valor associado ao teste 0.067, 0.879  para as variáveis Genêro, Nobreza, respectivamente. Portanto indicando que não existem indícios
+Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Genêro, Nobreza, respectivamente. Portanto indicando que não existem indícios
 de falha no pressuposto.
 
 Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico
@@ -254,14 +270,10 @@ linear.predictions = TRUE, ggtheme = theme_bw())
 
 ### Interpretações com valores
 
-```{r}
+# Conclusão
 
-```
+# Bibliografia
 
-
-```{r}
-
-```
 
 
 
