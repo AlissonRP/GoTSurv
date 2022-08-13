@@ -94,7 +94,7 @@ O banco de dados em sua forma "original" não está pronto para a análise de so
 Como temos muitos personagens, também temos uma quantidade considerável de 
 associações^[No texto, associações na maior parte refere-se a famílias, porém existem também associações a quais não são famílias], assim é interessante avaliarmos a quantidade de indivíduos dentro dessas associações, como também a quantidade de mortos respectivamente.
 
-```{r, fig.width=6.9, fig.height=3.7, fig.subcap=c('(a)', '(b)', '(c)')}
+```{r, fig.width=6.9, fig.height=3.7, fig.cap="Comparação entre quantidade de membros nas associações e mortos", fig.subcap=c('(a)', '(b)', '(c)')}
 
 
 death = df |>    #where are you?
@@ -115,7 +115,7 @@ death |>
 death |> 
   ggplot(aes(reorder(Allegiances, prop), y = prop, fill = Allegiances)) + 
   geom_bar(stat = 'identity') + 
-  labs(y = "Proporção", x = "") + 
+  labs(y = "Proporção de mortos", x = "") + 
   coord_flip() +
   theme(legend.position = "none")
 
@@ -179,11 +179,11 @@ survfit(Surv(time_death, status) ~ Nobility + Gender,
 Nota-se portanto que o comportamento individual das variáveis se mantém nas 
 interações, pois para cada sexo a classe social, a sobrevivência com valores
 superiores é sempre a da Nobreza, nesse mesmo sentido até mesmo o sexo feminino da classe
-comum possui maior taxa de sobrevivência que a do sexo masculino nobre ^[Contexto **importa**:A figura NN sem contexto pode facilmente tornar-se "como mentir com estatística"].
+comum possui maior taxa de sobrevivência que a do sexo masculino nobre ^[Contexto **importa**: A figura NN sem contexto pode facilmente tornar-se "como mentir com estatística"].
 
 
 
-Faz-se então importante realizarmos um teste de hipótese para avaliar as consequências
+Faz-se então importante realizarmos um teste de hipóteses para avaliar as consequências
 anteriores, aqui vamos utilizar o teste log-rank, onde em termos gerais possui a seguinte hipótese. O p-valor do teste para cada grupo é indicado pela tabela TT
 $$
 H_0: \text{As funções de sobrevivências dos grupos são iguais.} 
@@ -253,9 +253,21 @@ de falha no pressuposto.
 Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico
 
 ## Ajuste do modelo
+O modelo de Regressão de Cox depende de parâmetros $\beta's$ desconhecidos e nessa abordagem constantes, que medem o efeito das covariáveis sobre a função taxa de falha, entretanto na prática possuímos apenas algumas observações ao nosso alcance, nesse caso, somente os personagens a qual o autor citou nos livros, mas existem outros no universo a qual o nome não foi mencionado, assim devemos utilizar algum método de estimação  para encontrar uma estimaçtiva  para os $\beta's$ para que o modelo possa ser ajustado.
+
+Ajustando o modelo temos a seguinte tabela com o resumo do ajuste
 
 ```{r}
-fit |> summary()
+model_sum = fit |> summary()
+
+coefs = model_sum$coefficients |> 
+  as.data.frame()
+
+coefs |> 
+  select(Coeficientes = coef, `exp(Coeficientes)` = `exp(coef)`,
+        `Erro padrão` = `se(coef)`, P.valor = `Pr(>|z|)`) |> 
+  mutate(P.valor = format.pval(P.valor, eps = 0.01)) |> 
+  mypdf1::pdf1_tbl("Resumo do ajuste")
 ```
 ## Análise de diagnóstico
 
@@ -267,6 +279,15 @@ linear.predictions = TRUE, ggtheme = theme_bw())
 
 
 ## Interpretação dos coeficientes
+
+Uma grande vantagem que o modelo de Regressão de Cox dispõe é a interpretabilidade, pois como indicado em @colosimo2006analise se tivermos taxas de falhas proporcionais conseguimos verificar que o efeito das covariáveis é acelerar ou desacelerar a taxa de falha.
+
+Nesse caso um valor de `1` para  a covariável `GenderMas`  indica que o personagem é do sexo masculino, assim dado seu coenficiente estimado, temos que o risco de falha para um personagem masculino é `r round(coefs[1, 2], 3)` maior que para um personagem feminino, um número que formaliza em termos de taxa de falha  o que foi visto na figura NN pela função de sobrevivência.
+
+Na situação da covariável `NobilityNobre` que indica se o personagem é um nobre, temos um efeito de desaceleração da taxa de falha, pois seu coeficiente associado é menor do que 1, outra fato esperado dado o o comportamento da função de sobrevivência na figura NN.
+
+
+Podemos também naturalmente comparar a o efeito da interação entre essas duas covariáveis na taxa de falha, supondo a título de curiosidade um personagem feminino e nobre, 
 
 ### Interpretações com valores
 
