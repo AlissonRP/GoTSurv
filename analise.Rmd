@@ -1,10 +1,11 @@
 ---
 title: "As Crônicas da Sobrevivência"
 author: "Alisson Rosa"
-abstract: "A maioria das análises empregando o banco de dados  aqui utilizado remove
+abstract: "A maioria das análises ^[Podem ser consultadas [aqui](https://www.kaggle.com/datasets/mylesoneill/game-of-thrones/code?datasetId=43&sortBy=voteCount)] empregando o banco de dados  aqui utilizado remove
 as observações que não tiverem o evento de interesse, isso evidentemente é uma 
 ação equivocada pois tais observações também carregam informações pertinentes, 
-o que foi desenvolvido aqui portanto é uma análise de sobrevivência onde avaliamos
+o que foi desenvolvido aqui portanto é uma análise de sobrevivência onde foi 
+avaliado
 as funções de sobrevivência para as as variáveis selecionadas, juntamente com um
 modelo de regressão de Cox para avaliar influência das covariáveis na função taxa
 de falha, toda análise foi desenvolvida usando a linguagem R @R e o código elaborado
@@ -51,8 +52,33 @@ plot_surv <- function(ekm, ci = T) {
   autoplot(ekm, conf.int = ci) +
     labs(
       y = "Sobrevivência estimada",
-      x = "tempo"
+      x = "Tempo (Livro)"
+    ) +
+    labs(
+      color = "Grupo",
+      fill = "Grupo"
     )
+}
+
+bar_plot <- function(df, v) {
+  ggplot(df, aes(
+    x = {{ v }},
+    y = prop.table(stat(count)),
+    fill = {{ v }},
+    label = scales::percent(prop.table(stat(count)))
+  )) +
+    geom_bar(position = "dodge") +
+    geom_text(
+      stat = "count",
+      position = position_dodge(.9),
+      vjust = -0.5,
+      size = 3.5
+    ) +
+    scale_y_continuous(labels = scales::percent) +
+    labs(y = "Proporção", x = df %>%
+      select({{ v }}) %>%
+      names()) +
+    theme(plot.title = element_text(hjust = 0.5, size = 10))
 }
 ```
 
@@ -75,8 +101,8 @@ Há três argumentos principais na história, que se tornam cada vez mais interl
 
 Os livros de As Crônicas de Gelo e Fogo foram adaptados para diversos formatos, como jogos de videogame, histórias em quadrinhos, bonecos em miniatura e uma série de TV intitulada Game of Thrones. A atração televisiva apresentou a saga a um maior número de leitores e lhe trouxe maior notoriedade, fazendo com que os quatro primeiros volumes da série surgissem entre os dez primeiros colocados na referencial lista de mais vendidos do jornal norte-americano The New York Times em 2011. 
 
-O banco de dados aqui utilizado está disponível no [\textcolor{red}{Kaggle}](https://www.kaggle.com/datasets/mylesoneill/game-of-thrones?select=character-deaths.csv).
-Vamos nesse breve ensaio fazer uma análise de sobrevivência estatística dos personagens dos livros.
+
+Vamos nesse breve ensaio fazer uma análise de sobrevivência estatística dos personagens dos livros, onde o banco de dados aqui utilizado está disponível no [\textcolor{red}{Kaggle}](https://www.kaggle.com/datasets/mylesoneill/game-of-thrones?select=character-deaths.csv).
 
 # Análise Inicial
 
@@ -90,15 +116,15 @@ Aqui, o nosso evento de interesse é o **tempo para morte** de um personagem, e 
 
 As crônicas de gelo  e fogo apesar de possuir "apenas" 5 livros é uma obra extensa 
 possuindo uma quantidade enorme de personagens, dessa maneira fica claro que o número de personagens que morre é muito menor que os que não morrem, portanto para coesão 
-da análise foi removido  todos os indivíduos que não estavam associados a alguma família relevante ^[Onde relevante é definido arbitrariamente pelo  autor que vos escreve].
+da análise foi removido  todos os indivíduos que não estavam associados a alguma família relevante ^[Onde relevante é definido arbitrariamente pelo  autor que vos escreve.].
 O banco de dados em sua forma "original" não está pronto para a análise de sobrevivência, pois é necessário uma variável que informe se  o tempo observado foi de censura ou do evento de interesse, assim essa variável foi construída para análise, onde o banco modificado pode ser encontrado [\textcolor{red}{aqui}](https://github.com/AlissonRP/SURV/blob/master/data/gotsurv.csv).
 
 ## Análise Descritiva
 
 Como temos muitos personagens, também temos uma quantidade considerável de 
-associações^[No texto, associações na maior parte refere-se a famílias, porém existem também associações a quais não são famílias], assim é interessante avaliarmos a quantidade de indivíduos dentro dessas associações, como também a quantidade de mortos respectivamente.
+associações^[No texto, associações na maior parte refere-se a famílias, porém existem também associações a quais não são famílias.], assim é interessante avaliarmos a quantidade de indivíduos dentro dessas associações, como também a quantidade de mortos respectivamente. O que pode ser avaliado pela Figura \@ref(fig:figdeath).
 
-```{r, fig.width=6.9, fig.height=3.7, fig.cap="Comparação entre quantidade de membros nas associações e mortos", fig.subcap=c('(a)', '(b)', '(c)')}
+```{r figdeath, fig.width=6.9, fig.height=3.7, fig.cap="Comparação entre quantidade de membros nas associações e mortos", fig.subcap=c('(a)', '(b)', '(c)')}
 
 
 death <- df |> # where are you?
@@ -132,6 +158,46 @@ Note que três famílias se destacam tanto em quantidade de membros e em mortos,
 
 Dado o que foi comentado, é interessante juntar algumas famílias que possuem poucos membros em um outro grupo para análise ser mais focada, assim vamos agrupar as casas Martell, Tully, Tyrell, Arryn em um grupo chamado de "outros", vale ressaltar que os Targaryen também possuem poucos membros, porém são peça chave da obra.
 
+Pela Figura \@ref(fig:fig2), podemos averiguar a proporção de personagens de cada
+sexo na obra,  junto com a quantidade de mortos por sexo.
+```{r fig2, fig.height = 3.9, fig.cap="Proporção de personagens por sexo e quantidade de mortos"}
+df |>
+  bar_plot(Gender) +
+  labs(x = "Sexo") +
+  theme(legend.position = "none") +
+  df |>
+  group_by(Gender) |>
+  summarise(Total = sum(status)) |>
+  ggplot(aes(Gender, Total, fill = Gender)) +
+  labs(x = "Sexo", y = "Total de mortos") +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Total), position = position_dodge(width = 0.9), vjust = -0.25) +
+  theme(legend.position = "none")
+```
+
+Notamos o predomínio na quantidade de personagens masculinos, o comportamento
+de mortos segue a proporção da quantidade. 
+Pela \@ref(fig:fig3) temos a quantidade de personagens por classe social, junto com
+a quantidade de mortos por classe.
+
+```{r fig3, fig.height = 4.1, fig.cap="Proporção de personagens por classe social e quantidade de mortos"}
+df |>
+  bar_plot(Nobility) +
+  labs(x = "Classe social") +
+  theme(legend.position = "none") +
+  df |>
+  group_by(Nobility) |>
+  summarise(Total = sum(status)) |>
+  ggplot(aes(Nobility, Total, fill = Nobility)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Classe social", y = "Total de mortos") +
+  geom_text(aes(label = Total), position = position_dodge(width = 0.9), vjust = -0.25) +
+  theme(legend.position = "none")
+```
+Diferente do que vimos na Figura \@ref(fig:fig2), para a classe social a quantidade
+de mortos não segue a proporção de indivíduos na classe, pois temos mais personagens
+comuns morrendo.
+
 ```{r}
 df <- df |>
   mutate(Allegiances = fct_collapse(Allegiances, Outros = c(
@@ -149,25 +215,36 @@ df <- df |>
 
 # Estimando quantidades básicas
 
-A função de sobrevivência ($S$) nos informa qual a probabilidade de uma observação vir a ter o evento de interesse a partir do tempo $t$, assim aqui podemos avaliar a função de sobrevivência estratificada por grupos, avaliando tanto em termos visuais e inferenciais a possibilidade de existir diferença em $S$
+A função de sobrevivência $S$ nos informa qual a probabilidade de uma observação vir a ter o evento de interesse a partir do tempo $t$, em termos formais podemos definir como:
+\begin{align}
+    S(t) = P(T > t) = 1 - F(t)
+\end{align}
+desse modo  podemos avaliar a função de sobrevivência estratificada por grupos, avaliando tanto em termos visuais e inferenciais a possibilidade de existir diferença em $S$. 
+Uma quantidade também interessante e útil mais a frente é função taxa de falha acumulada $\Lambda$, que pode ser definida como:
+\begin{align}
+    \Lambda(t) = -\log(S(t))
+\end{align}
+
+
 
 ## Estimando a sobrevivência
-Sabemos que a proporção de personagens do sexo feminino é de apenas aproximadamente $16$%, assim uma pergunta a se fazer é se existe diferença na sobrevivência entre os sexos, o que pode ser 
-avaliado pela figura NN
+Sabemos que a proporção de personagens do sexo feminino é de apenas aproximadamente $16$%, desse modo uma pergunta a se fazer é se existe diferença na sobrevivência entre os sexos, o que pode ser 
+avaliado pela Figura \@ref(fig:survsex)
 
-```{r survs, fig.cap="Função de sobrevivência estimada para ambos os sexos"}
+```{r survsex, fig.cap="Função de sobrevivência estimada para ambos os sexos"}
 survfit(Surv(time_death, status) ~ Gender,
   data = df
 ) |>
   plot_surv()
 ```
-Assim, a figura NN nos fornece indicios de  que existe diferença no tempo de sobrevivência entre os sexos, pois a curva estimada de $S$ para o sexo feminino está pontualmente superior que a do sexo masculino para todos os tempos, e mesmo em termos de intervalos de confiança existe pouca interseção.
+Assim, a Figura \@ref(fig:survsex) nos fornece indicios de  que existe diferença no tempo de sobrevivência entre os sexos, pois a curva estimada de $S$ para o sexo feminino está pontualmente superior que a do sexo masculino para todos os tempos, e mesmo em termos de intervalos de confiança existe pouca interseção.
 
 
 
 Também é importante verificar se existe diferença nas funções de sobrevivência 
-para a classe social do personagem, o que pode ser visto pela figura NN
-```{r, fig.cap="Função de sobrevivência estimada  para as classes sociais"}
+para a classe social do personagem, o que pode ser visto pela Figura 
+\@ref(fig:survclass).
+```{r survclass, fig.cap="Função de sobrevivência estimada  para as classes sociais"}
 survfit(Surv(time_death, status) ~ Nobility,
   data = df
 ) |>
@@ -177,11 +254,11 @@ survfit(Surv(time_death, status) ~ Nobility,
 Como é de se esperar ^[Warui kizoku wo yattsukero da - Moriarty The Patriot], personagens que são de uma família nobre tem uma sobrevivência estimada superior  aos que são de 
 família comum.
 
-Dado que as figuras NN e NN indicaram diferença no tempo de sobrevivência para 
+Dado que as Figuras \@ref(fig:survsex) e \@ref(fig:survclass) indicaram diferença no tempo de sobrevivência para 
 sexo e nobreza, é importante se perguntar se a interação entre esses  grupos 
-mantém tal diferença, o que pode ser avaliado pela figura NN
+mantém tal diferença, o que pode ser avaliado pela Figura \@ref(fig:survint).
 
-```{r, fig.cap="Função de sobrevivência estimada  para as classes sociais e sexos"}
+```{r survint, fig.cap="Função de sobrevivência estimada  para as classes sociais e sexos"}
 survfit(Surv(time_death, status) ~ Nobility + Gender,
   data = df
 ) |>
@@ -191,41 +268,47 @@ survfit(Surv(time_death, status) ~ Nobility + Gender,
 Nota-se portanto que o comportamento individual das variáveis se mantém nas 
 interações, pois para cada sexo a classe social, a sobrevivência com valores
 superiores é sempre a da Nobreza, nesse mesmo sentido até mesmo o sexo feminino da classe
-comum possui maior taxa de sobrevivência que a do sexo masculino nobre ^[Contexto **importa**: A figura NN sem contexto pode facilmente tornar-se "como mentir com estatística"].
+comum possui maior taxa de sobrevivência que a do sexo masculino nobre ^[Contexto **importa**: A Figura \@ref(fig:survint) sem contexto pode facilmente tornar-se "como mentir com estatística".].
 
 
 Como vimos na seção anterior os Starks tem uma grande quantidade de membros e 
 também uma grande quantidade de mortos, portanto é pertinente analisar a função de 
-sobrevivência para eles e também com algumas famílias, o que pode ser visto pela figura NN
+sobrevivência para eles e também com algumas famílias, o que pode ser 
+visto pela Figura \@ref(fig:survass1).
 
 
-```{r, fig.cap="Função de sobrevivência estimada para as Associações 1"}
-df |> 
-filter(Allegiances %in% c("House Stark", "House Targaryen",
-                          "House Lannister", "House Baratheon")) |> 
-survfit(Surv(time_death, status) ~ Allegiances,
-  data = _
-) |>
+```{r survass1, fig.cap="Função de sobrevivência estimada para as Associações 1"}
+df |>
+  filter(Allegiances %in% c(
+    "House Stark", "House Targaryen",
+    "House Lannister", "House Baratheon"
+  )) |>
+  survfit(Surv(time_death, status) ~ Allegiances,
+    data = _
+  ) |>
   plot_surv(ci = F)
 ```
 
-Assim a figura NN nos indica que a vida de um Stark não é fácil, a cada livro lançado até o livro 3, a sobrevivência para um Stark despenca, e no livro 3 ^[Red wedding para os mais familiarizados] podemos ver a maior queda. 
+Dessa forma a Figura \@ref(fig:survass1) nos indica que a vida de um Stark não é fácil, a cada livro lançado até o livro 3, a sobrevivência para um Stark despenca, e no livro 3 ^[Red wedding para os mais familiarizados.] podemos ver a maior queda. 
 Podemos notar também que os Baratheon iniciam com uma sobrevivência superior ao Lannister, mas um comportamento que não se mantém a partir do livro 2.
 
-Podemos também avaliar a sobrevivência para o povo livre, a patrulha da noite e a junção das famílias que agora são denotadas por "outros", o que pode ser visto pela figura
+Podemos também avaliar a sobrevivência para o povo livre, a patrulha da noite e a junção das famílias que agora são denotadas por "outros", o que pode ser visto pela Figura
+\@ref(fig:survass2).
 
 
-```{r, fig.cap="Função de sobrevivência estimada para as Associações 2"}
-df |> 
-filter(Allegiances %in% c("Wildling", "Night's Watch"
-                          , "Outros")) |> 
-survfit(Surv(time_death, status) ~ Allegiances,
-  data = _
-) |>
+```{r survass2, fig.cap="Função de sobrevivência estimada para as Associações 2"}
+df |>
+  filter(Allegiances %in% c(
+    "Wildling", "Night's Watch",
+    "Outros"
+  )) |>
+  survfit(Surv(time_death, status) ~ Allegiances,
+    data = _
+  ) |>
   plot_surv(ci = F)
 ```
 
-Notamos que até o livro 2 temos um comportamento semelhante, porém o Povo livre e a Patrulha da noite tomam um grande abate no livro 3 ^[Exploração além das muralhas], e como era de se esperar, no livro 5 o grupo dos "outros" formado somente por nobres mantém a maior sobrevivência.
+Notamos que até o livro 2 temos um comportamento semelhante, porém o Povo livre e a Patrulha da noite tomam um grande abate no livro 3 ^[Para os íntimos: Exploração além das muralhas.], e como era de se esperar, no livro 5 o grupo dos "outros" formado somente por nobres mantém a maior sobrevivência.
 
 Faz-se então importante realizarmos um teste de hipóteses para avaliar as 
 decorrências
@@ -242,32 +325,42 @@ extract_pvalue <- function(df, time = time_death,
 }
 ```
 
-O p-valor do teste para cada grupo é indicado pela tabela TT
-```{r}
+O p-valor do teste para cada grupo é indicado pela Tabela \@ref(tab:tab1)
+```{r tab1}
 test_nob <- survdiff(Surv(time_death, status) ~ Nobility, rho = 0, data = df)
 test_gender <- survdiff(Surv(time_death, status) ~ Gender, rho = 0, data = df)
 
 
 
-test_family_1 <- survdiff(Surv(time_death, status) ~ Nobility, rho = 0, 
-                          data = df |> 
-filter(Allegiances %in% c("House Stark", "House Targaryen",
-                          "House Lannister", "House Baratheon")))
+test_family_1 <- survdiff(Surv(time_death, status) ~ Nobility,
+  rho = 0,
+  data = df |>
+    filter(Allegiances %in% c(
+      "House Stark", "House Targaryen",
+      "House Lannister", "House Baratheon"
+    ))
+)
 
-test_family_2 <- survdiff(Surv(time_death, status) ~ Nobility, rho = 0, 
-                          data = df |> 
-filter(Allegiances %in% c("Wildling", "Night's Watch"
-                          , "Outros")))
+test_family_2 <- survdiff(Surv(time_death, status) ~ Nobility,
+  rho = 0,
+  data = df |>
+    filter(Allegiances %in% c(
+      "Wildling", "Night's Watch",
+      "Outros"
+    ))
+)
 
 variable <- c("Sexo", "Nobreza", "Associações 1", "Associações 2")
-pvalue <- c(1 - pchisq(test_gender$chisq, 1), 1 - pchisq(test_nob$chisq, 1),
-            1 - pchisq(test_family_1$chisq, 1), 1 - pchisq(test_family_2$chisq, 1))
+pvalue <- c(
+  1 - pchisq(test_gender$chisq, 1), 1 - pchisq(test_nob$chisq, 1),
+  1 - pchisq(test_family_1$chisq, 1), 1 - pchisq(test_family_2$chisq, 1)
+)
 
-data.frame(variável = variable, p.valor = pvalue) |>
-  mutate(p.valor = format.pval(p.valor, eps = 0.01)) |>
+data.frame(Variável = variable, P.valor = pvalue) |>
+  mutate(P.valor = format.pval(P.valor, eps = 0.01)) |>
   mypdf1::pdf1_tbl(title = "P-valores fornecidos pelo teste log-rank")
 ```
-Assim podemos averiguar que o único grupo a qual o teste não captou diferença
+Desta forma podemos averiguar que o único grupo a qual o teste não captou diferença
 na função de sobrevivência foi o de Associações 1. que é formado pelos Starks, Lannister, Targaryen e Baratheon. Para Sexo, Nobreza e Associações 2, existem evidências de diferença nas funções de sobrevivência.
 
 As análises anteriores são pertinentes para a seleção das covariáveis do modelo
@@ -285,7 +378,7 @@ está situado seu tempo de sobrevivência pode ser diferente.
 ## Modelo de Regressão de Cox
 Vamos nessa seção ajustar um modelo de regressão de Cox a qual foi 
 introduzido pela primeira vez em @cox1972regression. Onde 
-vamos utilizar como covariáveis, o gênero do personagem e se é da nobreza, porém antes de ajustar o modelo precisamos verificar se o pressuposto de taxa de falha proporcionais não foi quebrado. Dessa maneira devemos primeiro realizar um teste
+vamos utilizar como covariáveis, o sexo do personagem e se é da nobreza, porém antes de ajustar o modelo precisamos verificar se o pressuposto de taxa de falha proporcionais não foi quebrado. Dessa maneira devemos primeiro realizar um teste
 para verificar se existem evidências de não proporcionalidade, em termos gerais
 o teste possui a seguinte hipótese:
 $$
@@ -304,7 +397,7 @@ fit <- coxph(Surv(time_death, status) ~ Gender + Nobility, data = df, x = T, met
 l <- cox.zph(fit, transform = "identity")
 ```
 
-Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Gênero, Nobreza, respectivamente. Portanto indicando que não existem indícios
+Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Sexo, Nobreza, respectivamente. Portanto indicando que não existem indícios
 de falha no pressuposto.
 
 Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico
@@ -313,9 +406,10 @@ Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico
 O modelo de Regressão de Cox depende de parâmetros $\beta's$ desconhecidos e nessa abordagem constantes, que medem o efeito das covariáveis sobre a função taxa de falha, entretanto na prática possuímos apenas algumas observações ao nosso alcance, nesse caso, somente os personagens a qual o autor citou nos livros, mas existem outros no universo a qual o nome não foi mencionado, assim, devemos utilizar algum método de estimação  para encontrar 
 uma aproximação  para os $\beta's$ para que o modelo possa ser ajustado.
 
-Ajustando o modelo com os dados observados  temos a seguinte tabela com o resumo do ajuste
+Ajustando o modelo com os dados observados, temos a  Tabela  \@ref(tab:tab2) 
+com o resumo do ajuste.
 
-```{r}
+```{r tab2}
 model_sum <- fit |> summary()
 
 coefs <- model_sum$coefficients |>
@@ -330,8 +424,8 @@ coefs |>
   mypdf1::pdf1_tbl("Resumo do ajuste")
 ```
 
-Como esperado as covariáveis são significativas para explicar o taxa de falha, 
-notamos que se o personagem é do genêro masculino, ele tem uma aceleração na taxa
+Como esperado, as covariáveis são significativas para explicar a taxa de falha, 
+notamos que se o personagem é do sexo masculino, ele tem uma aceleração na taxa
 de falha pois a exponencial de seu coeficiente estimado é maior do que 1 o que não
 acontece para um personagem nobre, dado a exponencial do coeficiente estimado é
 `r round(coefs[2,2 ], 2)` indicando desaceleração na taxa de falha.
@@ -339,12 +433,20 @@ acontece para um personagem nobre, dado a exponencial do coeficiente estimado é
 ## Análise de diagnóstico
 
 O modelo de regressão de Cox não se adequa a qualquer situação, assim como qualquer
-modelo estatístico clássico, devemos fazer uma avaliação geral da adequação. 
-Aqui vamos utilizar o Resíduo de Cox-Snell a qual foi definido em @cox1968, tal 
+modelo estatístico clássico devemos fazer uma avaliação geral da adequação. 
+Aqui vamos utilizar o Resíduo de Cox-Snell ($e$) a qual foi definido em @cox1968, tal 
 resíduo se o modelo estiver corretamente ajustado pode ser visto como uma amostra
-censurada de uma distribuição exponencial com parâmetro igual a 1, como 
+censurada de uma distribuição exponencial com parâmetro igual a 1, assim o 
+gráfico de $e_i$ versus $\Lambda(e_i)$, vai ser uma reta com inclinação 1, pois
+dada a definição de $\Lambda$ em , e sabendo que a função acumulada de uma 
+distribuição exponencial com parâmetro igual a 1 é dada por $\exp(-x)$, dessa 
+maneira temos:
 
-Tal comportamento pode ser avaliado pela figura NN
+\begin{align}
+\Lambda(e_i) = \Lambda(S(e_i)) = -\log(\exp(-e_i)) = e_i
+\end{align}
+
+Dessa maneira podemos tal comportamento pode ser avaliado pela figura \@ref(fig:fig-sub)
 
 ```{r fig-sub, fig.cap="Avaliação dos resíduos", fig.subcap=c('t', 'b')}
 ### Obter o res ́ıduo
@@ -373,7 +475,7 @@ plot(st, sexp1,
 )
 ```
 
-Assim dado texto e texto, podemos notar que visualmente não existem evidências de
+Podemos notar em ambasa as figuras que visualmente não existem evidências de
 não adequação do ajuste.
 
 
@@ -391,8 +493,61 @@ Na situação da covariável `NobilityNobre` que indica se o personagem é um no
 Podemos também naturalmente comparar a o efeito da interação entre essas duas 
 covariáveis na taxa de falha, supondo a título de curiosidade um personagem feminino e nobre, 
 
+## Alguns gráficos importantes
+Vamos aqui revisitar algumas quantidades anteriores, porém agora sobre a 
+estrutura do modelo de Regressão de Cox  a figura \@ref(fig:finalfig) nos fornece
+a função de sobrevivência e o risco acumulado.
 
+```{r finalfig, fig.cap="Função de Sobrevivência e Risco acumulado utilizando o modelo"}
+#### Para obter a sobreviv�ncia e taxa de falha estimadas
+Ht <- basehaz(fit, centered = F)
+tempos <- Ht$time
+H0 <- Ht$hazard
+S0 <- exp(-H0)
+betas <- fit$coefficients
+# sobrevivencia para sexo feminino e nobre
+st1 <- S0^(exp(betas[2])) # sexo feminino e nobre
+st2 <- S0^(exp(betas[1])) # sexo masculino e comum
+
+### Comandos para obten��o dos gr�ficos de sobreviv�ncia
+b <- fit$coefficients
+###### Sobreviv�ncia estimada para a idade=50
+
+
+
+###### Sobreviv�ncia estimada para a idade=65
+
+
+###### Gr�fico das curvas de sobreviv�ncia  para a idade=50
+par(mfrow = c(1, 2), cex = 0.8)
+plot(tempos, st1, type = "s", ylim = range(c(0.3, 1)), xlab = "Tempos(Livros)", ylab = "S(t|x)", lty = 1)
+lines(tempos, st2, type = "s", lty = 2)
+legend(2, 0.5,
+  lty = c(1, 2, 3, 4), c("Feminino nobre", "Masculino comum"),
+  lwd = 1, bty = "n", cex = 0.9
+)
+title("Sobrevivência pelo modelo")
+
+### Para o gr�fico da taxa de falha acumulada estimada
+## Taxas de falha
+Ht1 <- -log(st1)
+Ht2 <- -log(st2)
+
+###### Gr�fico das taxas de falha acumulada para a i dade=50
+plot(tempos, Ht1, type = "s", ylim = range(c(0, 0.9)), xlim = c(1, 5), xlab = "Tempos(Livros)", ylab = "Risco Acumulado", lty = 1)
+lines(tempos, Ht2, type = "s", lty = 2)
+legend(1, 0.75,
+  lty = c(1, 2, 3, 4), c("Feminino nobre", "Masculino comum"),
+  lwd = 1, bty = "n", cex = 0.9
+)
+title("Risco acumulado")
+```
+Notamos assim que o modelo conseguiu assimilar  os atributos que vimos ao longo da 
+análise, pois um personagem feminino nobre possui uma sobrevivência maior e risco
+menor do que um masculino comum ao longo dos livros.
 
 # Conclusão
+
+
 
 # Bibliografia
