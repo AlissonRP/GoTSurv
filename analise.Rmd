@@ -266,7 +266,7 @@ survfit(Surv(time_death, status) ~ Nobility + Gender,
 ```
 
 Nota-se portanto que o comportamento individual das variáveis se mantém nas 
-interações, pois para cada sexo a classe social, a sobrevivência com valores
+interações, pois para cada sexo e classe social a sobrevivência com valores
 superiores é sempre a da Nobreza, nesse mesmo sentido até mesmo o sexo feminino da classe
 comum possui maior taxa de sobrevivência que a do sexo masculino nobre ^[Contexto **importa**: A Figura \@ref(fig:survint) sem contexto pode facilmente tornar-se "como mentir com estatística".].
 
@@ -446,7 +446,7 @@ maneira temos:
 \Lambda(e_i) = \Lambda(S(e_i)) = -\log(\exp(-e_i)) = e_i
 \end{align}
 
-Dessa maneira podemos tal comportamento pode ser avaliado pela figura \@ref(fig:fig-sub)
+Dessa maneira, podemos analisar tal comportamento  pela Figura \@ref(fig:fig-sub).
 
 ```{r fig-sub, fig.cap="Avaliação dos resíduos", fig.subcap=c('t', 'b')}
 ### Obter o res ́ıduo
@@ -548,6 +548,23 @@ menor do que um masculino comum ao longo dos livros.
 
 # Conclusão
 
+Contemplamos a fundo o comportamento da personagens na obra 
+As Crônicas de Gelo e Fogo, onde notamos que a maioria dos personagens é do sexo 
+masculino, e também os que mais morrem são masculinos, dentro das classes sociais 
+os personagens que mais morrem não são nobres, apesar da quantidade de nobres 
+e personagens de classe comuns na obra 
+ser bastante similar. A associação que teve
+maior desfalque na função de sobrevivência foi os Starks, entretanto não foi
+a associação que mais teve mortes, que foi o Povo livre. 
+Notamos tanto visualmente quanto inferencialmente que os personagens femininos 
+possuem uma função de sobrevivência superior que as dos masculinos, e a 
+discrepância torna-se maior ainda quando coloca-se personagens femininos nobres.
 
+Presenciamos que um modelo de Regressão de Cox utilizando como covariáveis se
+o personagem é do sexo masculino e se é nobre se ajustou corretamente, pois não
+temos evidências de falha no pressuposto de taxa de falha proporcional, assim como
+análise visuais não forneceram indícios de não adequação. Outra forte evidência de 
+boa adequação é as funções de sobrevivência e risco acumulado estimadas, pois todas
+as características observadas no estudo foram captadas.
 
 # Bibliografia
