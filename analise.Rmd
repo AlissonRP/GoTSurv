@@ -33,12 +33,11 @@ link-citations: true
 
 ```{r setup,include=F}
 
-options(digits=3)  #Arrendodamento
-options(scipen=999)
-ggplot2::theme_set(ggplot2::theme_minimal()) #Tema dos gráficos produzidos no ggplot2
-knitr::opts_chunk$set(echo=F,message=F,warning=F,fig.pos = 'H',fig.align = 'center',fig.width=6, fig.height=3.3)
-#scale_fill_discrete = \(...) ggplot2::scale_fill_brewer(... , palette="Set2") #Fixa a scale do fill dos gráficos do ggplot2
-
+options(digits = 3) # Arrendodamento
+options(scipen = 999)
+ggplot2::theme_set(ggplot2::theme_minimal()) # Tema dos gráficos produzidos no ggplot2
+knitr::opts_chunk$set(echo = F, message = F, warning = F, fig.pos = "H", fig.align = "center", fig.width = 6.4, fig.height = 3.3)
+# scale_fill_discrete = \(...) ggplot2::scale_fill_brewer(... , palette="Set2") #Fixa a scale do fill dos gráficos do ggplot2
 ```
 
 ```{r}
@@ -48,19 +47,23 @@ library(patchwork)
 library(ggfortify)
 library(survminer)
 
-plot_surv = function(ekm, ci = T){
+plot_surv <- function(ekm, ci = T) {
   autoplot(ekm, conf.int = ci) +
-  labs(y = 'Sobrevivência estimada', 
-       x = 'tempo')
+    labs(
+      y = "Sobrevivência estimada",
+      x = "tempo"
+    )
 }
 ```
 
 
 ```{r}
-df = read_csv('data/gotsurv.csv') |> 
-  mutate(Allegiances = factor(Allegiances),
-         Gender = ifelse(factor(Gender) == 0, "Fem", "Mas"),
-         Nobility = ifelse(factor(Nobility) == 0, "Comum", "Nobre"))
+df <- read_csv("data/gotsurv.csv") |>
+  mutate(
+    Allegiances = factor(Allegiances),
+    Gender = ifelse(factor(Gender) == 0, "Fem", "Mas"),
+    Nobility = ifelse(factor(Nobility) == 0, "Comum", "Nobre")
+  )
 ```
 # Introdução
 
@@ -80,7 +83,7 @@ Vamos nesse breve ensaio fazer uma análise de sobrevivência estatística dos p
 ## Análise de Sobrevivência
 
 A análise de sobrevivência difere dos métodos estatísticos clássicos pois temos dados censurados, que são observações  a qual o evento de interesse por algum motivo não pode ser mensurado. 
-Aqui o nosso evento de interesse é o **tempo para morte** de um personagem, e se o personagem não faleceu, será classificado como censurado, e seu respectivo tempo de censura será o último livro que apareceu. Assim, nossa variável tempo ($T$) possui somente 5 valores possíveis, que são respectivamente a numeração dos livros.
+Aqui, o nosso evento de interesse é o **tempo para morte** de um personagem, e se o personagem não faleceu, será classificado como censurado, e seu respectivo tempo de censura será o último livro que apareceu. Assim, nossa variável tempo ($T$) possui somente 5 valores possíveis, que são respectivamente a numeração dos livros.
 
 
 ## Metodologia da criação do banco de dados
@@ -98,43 +101,48 @@ associações^[No texto, associações na maior parte refere-se a famílias, por
 ```{r, fig.width=6.9, fig.height=3.7, fig.cap="Comparação entre quantidade de membros nas associações e mortos", fig.subcap=c('(a)', '(b)', '(c)')}
 
 
-death = df |>    #where are you?
-  filter(status == 1) |> 
+death <- df |> # where are you?
+  filter(status == 1) |>
   group_by(Allegiances) |>
-  summarise(mortos = sum(status)) |> 
-inner_join(df |> 
-  count(Allegiances) |> 
-    rename(total = n), by = 'Allegiances') |> 
+  summarise(mortos = sum(status)) |>
+  inner_join(df |>
+    count(Allegiances) |>
+    rename(total = n), by = "Allegiances") |>
   mutate(prop = mortos / total)
 
-death |> 
-  ggplot(aes(reorder(Allegiances, total) , y = total, fill = Allegiances)) + 
-  geom_bar(stat = 'identity') + 
+death |>
+  ggplot(aes(reorder(Allegiances, total), y = total, fill = Allegiances)) +
+  geom_bar(stat = "identity") +
   coord_flip() +
-  labs(y = "Total", x = "Associações") + 
+  labs(y = "Total", x = "Associações") +
   theme(legend.position = "none") +
-death |> 
-  ggplot(aes(reorder(Allegiances, prop), y = prop, fill = Allegiances)) + 
-  geom_bar(stat = 'identity') + 
-  labs(y = "Proporção de mortos", x = "") + 
+  death |>
+  ggplot(aes(reorder(Allegiances, prop), y = prop, fill = Allegiances)) +
+  geom_bar(stat = "identity") +
+  labs(y = "Proporção de mortos", x = "") +
   coord_flip() +
   theme(legend.position = "none")
-
-
 ```
 
 
 
 
-Notamos portanto que proporção de personagens mortos segue a proporção de quantidade de membros da familia, assim é interessante juntar algumas famílias que possuem poucos membros em um outro grupo para análise ser mais focada, assim vamos agrupar as casas Martell, Tully, Tyrell, Arryn em um grupo chamado de "outros", vale ressaltar que os Targaryen também possuem poucos membros, porém são peça chave da obra.
+Notamos portanto que a proporção de personagens mortos não segue a proporção de quantidade de membros das associações, pois os Windlings (povo livre em portugûes) é a associação que teve mais baixas e associação que mais tem membros é a Night's Watch (Patrulha da noite em português).
+Note que três famílias se destacam tanto em quantidade de membros e em mortos, sendo elas os Starks, os Lannister e os Baratheon. Os Greyjoy também estão nas famílias com mais membros, estão em 4 lugar, entretanto tal posição não se mantém na quantidade de mortos.
+
+Dado o que foi comentado, é interessante juntar algumas famílias que possuem poucos membros em um outro grupo para análise ser mais focada, assim vamos agrupar as casas Martell, Tully, Tyrell, Arryn em um grupo chamado de "outros", vale ressaltar que os Targaryen também possuem poucos membros, porém são peça chave da obra.
 
 ```{r}
-df = df |> 
-  mutate(Allegiances = fct_collapse(Allegiances, Outros = c("House Tully",
-                                                             "House Tyrell",
-                                                             "House Arryn",
-                                                             "House Martell")))
+df <- df |>
+  mutate(Allegiances = fct_collapse(Allegiances, Outros = c(
+    "House Tully",
+    "House Tyrell",
+    "House Arryn",
+    "House Martell"
+  )))
 ```
+
+
 
 
 
@@ -144,11 +152,13 @@ df = df |>
 A função de sobrevivência ($S$) nos informa qual a probabilidade de uma observação vir a ter o evento de interesse a partir do tempo $t$, assim aqui podemos avaliar a função de sobrevivência estratificada por grupos, avaliando tanto em termos visuais e inferenciais a possibilidade de existir diferença em $S$
 
 ## Estimando a sobrevivência
-Sabemos que a proporção de personagens do sexo feminino é de apenas aproximadamente $16$%, assim uma pergunta a se fazer é se existe diferença na sobrevivência entre os sexos
+Sabemos que a proporção de personagens do sexo feminino é de apenas aproximadamente $16$%, assim uma pergunta a se fazer é se existe diferença na sobrevivência entre os sexos, o que pode ser 
+avaliado pela figura NN
 
 ```{r survs, fig.cap="Função de sobrevivência estimada para ambos os sexos"}
-survfit(Surv(time_death, status) ~ Gender, 
-              data = df) |> 
+survfit(Surv(time_death, status) ~ Gender,
+  data = df
+) |>
   plot_surv()
 ```
 Assim, a figura NN nos fornece indicios de  que existe diferença no tempo de sobrevivência entre os sexos, pois a curva estimada de $S$ para o sexo feminino está pontualmente superior que a do sexo masculino para todos os tempos, e mesmo em termos de intervalos de confiança existe pouca interseção.
@@ -157,24 +167,25 @@ Assim, a figura NN nos fornece indicios de  que existe diferença no tempo de so
 
 Também é importante verificar se existe diferença nas funções de sobrevivência 
 para a classe social do personagem, o que pode ser visto pela figura NN
-```{r}
-survfit(Surv(time_death, status) ~ Nobility, 
-              data = df) |> 
+```{r, fig.cap="Função de sobrevivência estimada  para as classes sociais"}
+survfit(Surv(time_death, status) ~ Nobility,
+  data = df
+) |>
   plot_surv()
 ```
 
-Como é de se esperar ^[Warui kizoku wo yattsukero da - Moriarty], personagens que são de uma família nobre tem uma sobrevivência estimada superior que os que são de família comum.
+Como é de se esperar ^[Warui kizoku wo yattsukero da - Moriarty The Patriot], personagens que são de uma família nobre tem uma sobrevivência estimada superior  aos que são de 
+família comum.
 
 Dado que as figuras NN e NN indicaram diferença no tempo de sobrevivência para 
 sexo e nobreza, é importante se perguntar se a interação entre esses  grupos 
 mantém tal diferença, o que pode ser avaliado pela figura NN
 
-```{r}
-survfit(Surv(time_death, status) ~ Nobility + Gender, 
-              data = df) |> 
+```{r, fig.cap="Função de sobrevivência estimada  para as classes sociais e sexos"}
+survfit(Surv(time_death, status) ~ Nobility + Gender,
+  data = df
+) |>
   plot_surv(ci = F)
-
-
 ```
 
 Nota-se portanto que o comportamento individual das variáveis se mantém nas 
@@ -183,35 +194,81 @@ superiores é sempre a da Nobreza, nesse mesmo sentido até mesmo o sexo feminin
 comum possui maior taxa de sobrevivência que a do sexo masculino nobre ^[Contexto **importa**: A figura NN sem contexto pode facilmente tornar-se "como mentir com estatística"].
 
 
+Como vimos na seção anterior os Starks tem uma grande quantidade de membros e 
+também uma grande quantidade de mortos, portanto é pertinente analisar a função de 
+sobrevivência para eles e também com algumas famílias, o que pode ser visto pela figura NN
 
-Faz-se então importante realizarmos um teste de hipóteses para avaliar as consequências
-anteriores, aqui vamos utilizar o teste log-rank, onde em termos gerais possui a seguinte hipótese. O p-valor do teste para cada grupo é indicado pela tabela TT
+
+```{r, fig.cap="Função de sobrevivência estimada para as Associações 1"}
+df |> 
+filter(Allegiances %in% c("House Stark", "House Targaryen",
+                          "House Lannister", "House Baratheon")) |> 
+survfit(Surv(time_death, status) ~ Allegiances,
+  data = _
+) |>
+  plot_surv(ci = F)
+```
+
+Assim a figura NN nos indica que a vida de um Stark não é fácil, a cada livro lançado até o livro 3, a sobrevivência para um Stark despenca, e no livro 3 ^[Red wedding para os mais familiarizados] podemos ver a maior queda. 
+Podemos notar também que os Baratheon iniciam com uma sobrevivência superior ao Lannister, mas um comportamento que não se mantém a partir do livro 2.
+
+Podemos também avaliar a sobrevivência para o povo livre, a patrulha da noite e a junção das famílias que agora são denotadas por "outros", o que pode ser visto pela figura
+
+
+```{r, fig.cap="Função de sobrevivência estimada para as Associações 2"}
+df |> 
+filter(Allegiances %in% c("Wildling", "Night's Watch"
+                          , "Outros")) |> 
+survfit(Surv(time_death, status) ~ Allegiances,
+  data = _
+) |>
+  plot_surv(ci = F)
+```
+
+Notamos que até o livro 2 temos um comportamento semelhante, porém o Povo livre e a Patrulha da noite tomam um grande abate no livro 3 ^[Exploração além das muralhas], e como era de se esperar, no livro 5 o grupo dos "outros" formado somente por nobres mantém a maior sobrevivência.
+
+Faz-se então importante realizarmos um teste de hipóteses para avaliar as 
+decorrências
+anteriores, aqui vamos utilizar o teste log-rank, onde em termos gerais possui a seguinte hipótese. 
 $$
 H_0: \text{As funções de sobrevivências dos grupos são iguais.} 
 $$
 ```{r}
 
-extract_pvalue = function(df, time = time_death, 
-                           status = status, group){
-  test_nob = survdiff(Surv(time, status) ~ group, rho=0, data = df)
-  1-pchisq(test_nob$chisq, 1)
+extract_pvalue <- function(df, time = time_death,
+                           status = status, group) {
+  test_nob <- survdiff(Surv(time, status) ~ group, rho = 0, data = df)
+  1 - pchisq(test_nob$chisq, 1)
 }
-
 ```
 
-
+O p-valor do teste para cada grupo é indicado pela tabela TT
 ```{r}
-test_nob = survdiff(Surv(time_death, status) ~ Nobility, rho=0, data = df)
-test_gender = survdiff(Surv(time_death, status) ~ Gender, rho=0, data = df)
+test_nob <- survdiff(Surv(time_death, status) ~ Nobility, rho = 0, data = df)
+test_gender <- survdiff(Surv(time_death, status) ~ Gender, rho = 0, data = df)
 
-  
-variable = c("Genêro", "Nobreza")
-pvalue = c(1-pchisq(test_gender$chisq, 1),1-pchisq(test_nob$chisq, 1))
 
-data.frame(variável = variable, p.valor = pvalue) |> 
-  mutate(pvalue = format.pval(pvalue, eps = 0.01)) |> 
-  mypdf1::pdf1_tbl(title ="P-valores fornecidos pelo teste log-rank")
+
+test_family_1 <- survdiff(Surv(time_death, status) ~ Nobility, rho = 0, 
+                          data = df |> 
+filter(Allegiances %in% c("House Stark", "House Targaryen",
+                          "House Lannister", "House Baratheon")))
+
+test_family_2 <- survdiff(Surv(time_death, status) ~ Nobility, rho = 0, 
+                          data = df |> 
+filter(Allegiances %in% c("Wildling", "Night's Watch"
+                          , "Outros")))
+
+variable <- c("Sexo", "Nobreza", "Associações 1", "Associações 2")
+pvalue <- c(1 - pchisq(test_gender$chisq, 1), 1 - pchisq(test_nob$chisq, 1),
+            1 - pchisq(test_family_1$chisq, 1), 1 - pchisq(test_family_2$chisq, 1))
+
+data.frame(variável = variable, p.valor = pvalue) |>
+  mutate(p.valor = format.pval(p.valor, eps = 0.01)) |>
+  mypdf1::pdf1_tbl(title = "P-valores fornecidos pelo teste log-rank")
 ```
+Assim podemos averiguar que o único grupo a qual o teste não captou diferença
+na função de sobrevivência foi o de Associações 1. que é formado pelos Starks, Lannister, Targaryen e Baratheon. Para Sexo, Nobreza e Associações 2, existem evidências de diferença nas funções de sobrevivência.
 
 As análises anteriores são pertinentes para a seleção das covariáveis do modelo
 de regressão, pois como vimos existem evidências de diferença nas funções de 
@@ -242,10 +299,9 @@ $$
 
 
 ```{r}
-fit<-coxph(Surv(time_death, status) ~ Gender + Nobility , data = df, x=T, method="breslow")
+fit <- coxph(Surv(time_death, status) ~ Gender + Nobility, data = df, x = T, method = "breslow")
 
-l =  cox.zph(fit, transform="identity")
-
+l <- cox.zph(fit, transform = "identity")
 ```
 
 Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Gênero, Nobreza, respectivamente. Portanto indicando que não existem indícios
@@ -260,15 +316,17 @@ uma aproximação  para os $\beta's$ para que o modelo possa ser ajustado.
 Ajustando o modelo com os dados observados  temos a seguinte tabela com o resumo do ajuste
 
 ```{r}
-model_sum = fit |> summary()
+model_sum <- fit |> summary()
 
-coefs = model_sum$coefficients |> 
+coefs <- model_sum$coefficients |>
   as.data.frame()
 
-coefs |> 
-  select(Coeficientes = coef, `exp(Coeficientes)` = `exp(coef)`,
-        `Erro padrão` = `se(coef)`, P.valor = `Pr(>|z|)`) |> 
-  mutate(P.valor = format.pval(P.valor, eps = 0.01)) |> 
+coefs |>
+  select(
+    Coeficientes = coef, `exp(Coeficientes)` = `exp(coef)`,
+    `Erro padrão` = `se(coef)`, P.valor = `Pr(>|z|)`
+  ) |>
+  mutate(P.valor = format.pval(P.valor, eps = 0.01)) |>
   mypdf1::pdf1_tbl("Resumo do ajuste")
 ```
 
@@ -290,33 +348,35 @@ Tal comportamento pode ser avaliado pela figura NN
 
 ```{r fig-sub, fig.cap="Avaliação dos resíduos", fig.subcap=c('t', 'b')}
 ### Obter o res ́ıduo
-par(mfrow=c(1,2), cex=0.8)
-resm<-resid(fit, type="martingale")
-res_cox<-df$status - resm #ŕesıduo de cox-Snell
-ekm <- survfit(Surv(res_cox, df$status)~1)
-plot(ekm, mark.time=F, conf.int=F, xlab="Resíduos",
-ylab="S(e) estimada")
-res_cox<-sort(res_cox)
-exp1<-exp(-res_cox)
-lines(res_cox, exp1, lty=3)
+par(mfrow = c(1, 2), cex = 0.8)
+resm <- resid(fit, type = "martingale")
+res_cox <- df$status - resm # ŕesıduo de cox-Snell
+ekm <- survfit(Surv(res_cox, df$status) ~ 1)
+plot(ekm,
+  mark.time = F, conf.int = F, xlab = "Resíduos",
+  ylab = "S(e) estimada"
+)
+res_cox <- sort(res_cox)
+exp1 <- exp(-res_cox)
+lines(res_cox, exp1, lty = 3)
 
-legend(1, 0.8, lty=c(1,3), c("Kaplan Meier","Exponencial(1)"),
-lwd=1, bty="n", cex=0.7)
-st<-ekm$surv
-t<-ekm$time
-sexp1<-exp(-t)
-plot(st, sexp1, xlab="S(e): Kaplan-Meier",
-ylab= "S(e): Exponencial(1)", pch=16)
+legend(1, 0.8,
+  lty = c(1, 3), c("Kaplan Meier", "Exponencial(1)"),
+  lwd = 1, bty = "n", cex = 0.7
+)
+st <- ekm$surv
+t <- ekm$time
+sexp1 <- exp(-t)
+plot(st, sexp1,
+  xlab = "S(e): Kaplan-Meier",
+  ylab = "S(e): Exponencial(1)", pch = 16
+)
 ```
 
 Assim dado texto e texto, podemos notar que visualmente não existem evidências de
 não adequação do ajuste.
 
-```{r}
-##### Avalia ̧c~ao dos res ́ıduos - Pontos at ́ıpicos
-ggcoxdiagnostics(fit, type = "scaledsch", linear.predictions = F,
-ggtheme = theme_bw())
-```
+
 
 
 ## Interpretação dos coeficientes
@@ -328,15 +388,11 @@ Nesse caso um valor de `1` para  a covariável `GenderMas`  indica que o persona
 Na situação da covariável `NobilityNobre` que indica se o personagem é um nobre, temos um efeito de desaceleração da taxa de falha, pois seu coeficiente associado é menor do que 1, outra fato esperado dado o o comportamento da função de sobrevivência na figura NN.
 
 
-Podemos também naturalmente comparar a o efeito da interação entre essas duas covariáveis na taxa de falha, supondo a título de curiosidade um personagem feminino e nobre, 
+Podemos também naturalmente comparar a o efeito da interação entre essas duas 
+covariáveis na taxa de falha, supondo a título de curiosidade um personagem feminino e nobre, 
 
-### Interpretações com valores
+
 
 # Conclusão
 
 # Bibliografia
-
-
-
-
-
