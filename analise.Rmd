@@ -1,13 +1,14 @@
 ---
 title: "As Crônicas da Sobrevivência"
-author: "author"
+author: "Alisson Rosa"
 abstract: "A maioria das análises empregando o banco de dados  aqui utilizado remove
 as observações que não tiverem o evento de interesse, isso evidentemente é uma 
 ação equivocada pois tais observações também carregam informações pertinentes, 
-o que é desenvolvido aqui portanto é uma análise de sobrevivência onde avaliamos
+o que foi desenvolvido aqui portanto é uma análise de sobrevivência onde avaliamos
 as funções de sobrevivência para as as variáveis selecionadas, juntamente com um
-modelo de regressão de Cox para avaliar influência das covariáveis no tempo de
-sobrevivência"
+modelo de regressão de Cox para avaliar influência das covariáveis na função taxa
+de falha, toda análise foi desenvolvida usando a linguagem R @R e o código elaborado
+pode ser consultado [aqui](https://github.com/AlissonRP/SURV)."
 header-includes:
    - \usepackage[brazil]{babel}
    - \usepackage{bm}
@@ -56,7 +57,7 @@ plot_surv = function(ekm, ci = T){
 
 
 ```{r}
-df = read_csv('gotsurv.csv') |> 
+df = read_csv('data/gotsurv.csv') |> 
   mutate(Allegiances = factor(Allegiances),
          Gender = ifelse(factor(Gender) == 0, "Fem", "Mas"),
          Nobility = ifelse(factor(Nobility) == 0, "Comum", "Nobre"))
@@ -71,7 +72,7 @@ Há três argumentos principais na história, que se tornam cada vez mais interl
 
 Os livros de As Crônicas de Gelo e Fogo foram adaptados para diversos formatos, como jogos de videogame, histórias em quadrinhos, bonecos em miniatura e uma série de TV intitulada Game of Thrones. A atração televisiva apresentou a saga a um maior número de leitores e lhe trouxe maior notoriedade, fazendo com que os quatro primeiros volumes da série surgissem entre os dez primeiros colocados na referencial lista de mais vendidos do jornal norte-americano The New York Times em 2011. 
 
-O banco de dados aqui utilizado está disponível no [kaggle](https://www.kaggle.com/datasets/mylesoneill/game-of-thrones?select=character-deaths.csv).
+O banco de dados aqui utilizado está disponível no [\textcolor{red}{Kaggle}](https://www.kaggle.com/datasets/mylesoneill/game-of-thrones?select=character-deaths.csv).
 Vamos nesse breve ensaio fazer uma análise de sobrevivência estatística dos personagens dos livros.
 
 # Análise Inicial
@@ -87,7 +88,7 @@ Aqui o nosso evento de interesse é o **tempo para morte** de um personagem, e s
 As crônicas de gelo  e fogo apesar de possuir "apenas" 5 livros é uma obra extensa 
 possuindo uma quantidade enorme de personagens, dessa maneira fica claro que o número de personagens que morre é muito menor que os que não morrem, portanto para coesão 
 da análise foi removido  todos os indivíduos que não estavam associados a alguma família relevante ^[Onde relevante é definido arbitrariamente pelo  autor que vos escreve].
-O banco de dados em sua forma "original" não está pronto para a análise de sobrevivência, pois é necessário uma variável que informe se  o tempo observado foi de censura ou do evento de interesse, assim essa variável foi construída para análise, onde o banco modificado pode ser encontrado [aqui](https://github.com/AlissonRP/SURV/blob/master/data/gotsurv.csv).
+O banco de dados em sua forma "original" não está pronto para a análise de sobrevivência, pois é necessário uma variável que informe se  o tempo observado foi de censura ou do evento de interesse, assim essa variável foi construída para análise, onde o banco modificado pode ser encontrado [\textcolor{red}{aqui}](https://github.com/AlissonRP/SURV/blob/master/data/gotsurv.csv).
 
 ## Análise Descritiva
 
@@ -140,7 +141,7 @@ df = df |>
 
 # Estimando quantidades básicas
 
-A função de sobrevivência ($S$) nos informa qual a probabilidade de uma observação vir a ter o evento de interesse a partir do tempo $t$, assim aqui podemos avaliar a função de sobrevivência estratificada por grupos, avaliando tanto em termos visuais e inferênciais a possibilidade de existir diferença em $S$
+A função de sobrevivência ($S$) nos informa qual a probabilidade de uma observação vir a ter o evento de interesse a partir do tempo $t$, assim aqui podemos avaliar a função de sobrevivência estratificada por grupos, avaliando tanto em termos visuais e inferenciais a possibilidade de existir diferença em $S$
 
 ## Estimando a sobrevivência
 Sabemos que a proporção de personagens do sexo feminino é de apenas aproximadamente $16$%, assim uma pergunta a se fazer é se existe diferença na sobrevivência entre os sexos
@@ -207,14 +208,14 @@ test_gender = survdiff(Surv(time_death, status) ~ Gender, rho=0, data = df)
 variable = c("Genêro", "Nobreza")
 pvalue = c(1-pchisq(test_gender$chisq, 1),1-pchisq(test_nob$chisq, 1))
 
-data.frame(variable, pvalue) |> 
+data.frame(variável = variable, p.valor = pvalue) |> 
   mutate(pvalue = format.pval(pvalue, eps = 0.01)) |> 
-  mypdf1::pdf1_tbl("P-valores fornecidos pelo teste log-rank")
+  mypdf1::pdf1_tbl(title ="P-valores fornecidos pelo teste log-rank")
 ```
 
 As análises anteriores são pertinentes para a seleção das covariáveis do modelo
 de regressão, pois como vimos existem evidências de diferença nas funções de 
-sobrevivência nesse grupos, em outras palavras dependendendo do grupo a qual o personagem
+sobrevivência nesse grupos, em outras palavras dependendo do grupo a qual o personagem
 está situado seu tempo de sobrevivência pode ser diferente.
 
 
@@ -227,7 +228,7 @@ está situado seu tempo de sobrevivência pode ser diferente.
 ## Modelo de Regressão de Cox
 Vamos nessa seção ajustar um modelo de regressão de Cox a qual foi 
 introduzido pela primeira vez em @cox1972regression. Onde 
-vamos utilizar como covariáveis, o genêro do personagem e se é da nobreza, porém antes de ajustar o modelo precisamos verificar se o pressuposto de taxa de falha proporcionais não foi quebrado. Dessa maneira devemos primeiro realizar um teste
+vamos utilizar como covariáveis, o gênero do personagem e se é da nobreza, porém antes de ajustar o modelo precisamos verificar se o pressuposto de taxa de falha proporcionais não foi quebrado. Dessa maneira devemos primeiro realizar um teste
 para verificar se existem evidências de não proporcionalidade, em termos gerais
 o teste possui a seguinte hipótese:
 $$
@@ -247,15 +248,16 @@ l =  cox.zph(fit, transform="identity")
 
 ```
 
-Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Genêro, Nobreza, respectivamente. Portanto indicando que não existem indícios
+Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Gênero, Nobreza, respectivamente. Portanto indicando que não existem indícios
 de falha no pressuposto.
 
 Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico
 
 ## Ajuste do modelo
-O modelo de Regressão de Cox depende de parâmetros $\beta's$ desconhecidos e nessa abordagem constantes, que medem o efeito das covariáveis sobre a função taxa de falha, entretanto na prática possuímos apenas algumas observações ao nosso alcance, nesse caso, somente os personagens a qual o autor citou nos livros, mas existem outros no universo a qual o nome não foi mencionado, assim devemos utilizar algum método de estimação  para encontrar uma estimaçtiva  para os $\beta's$ para que o modelo possa ser ajustado.
+O modelo de Regressão de Cox depende de parâmetros $\beta's$ desconhecidos e nessa abordagem constantes, que medem o efeito das covariáveis sobre a função taxa de falha, entretanto na prática possuímos apenas algumas observações ao nosso alcance, nesse caso, somente os personagens a qual o autor citou nos livros, mas existem outros no universo a qual o nome não foi mencionado, assim, devemos utilizar algum método de estimação  para encontrar 
+uma aproximação  para os $\beta's$ para que o modelo possa ser ajustado.
 
-Ajustando o modelo temos a seguinte tabela com o resumo do ajuste
+Ajustando o modelo com os dados observados  temos a seguinte tabela com o resumo do ajuste
 
 ```{r}
 model_sum = fit |> summary()
@@ -269,12 +271,51 @@ coefs |>
   mutate(P.valor = format.pval(P.valor, eps = 0.01)) |> 
   mypdf1::pdf1_tbl("Resumo do ajuste")
 ```
+
+Como esperado as covariáveis são significativas para explicar o taxa de falha, 
+notamos que se o personagem é do genêro masculino, ele tem uma aceleração na taxa
+de falha pois a exponencial de seu coeficiente estimado é maior do que 1 o que não
+acontece para um personagem nobre, dado a exponencial do coeficiente estimado é
+`r round(coefs[2,2 ], 2)` indicando desaceleração na taxa de falha.
+
 ## Análise de diagnóstico
+
+O modelo de regressão de Cox não se adequa a qualquer situação, assim como qualquer
+modelo estatístico clássico, devemos fazer uma avaliação geral da adequação. 
+Aqui vamos utilizar o Resíduo de Cox-Snell a qual foi definido em @cox1968, tal 
+resíduo se o modelo estiver corretamente ajustado pode ser visto como uma amostra
+censurada de uma distribuição exponencial com parâmetro igual a 1, como 
+
+Tal comportamento pode ser avaliado pela figura NN
+
+```{r fig-sub, fig.cap="Avaliação dos resíduos", fig.subcap=c('t', 'b')}
+### Obter o res ́ıduo
+par(mfrow=c(1,2), cex=0.8)
+resm<-resid(fit, type="martingale")
+res_cox<-df$status - resm #ŕesıduo de cox-Snell
+ekm <- survfit(Surv(res_cox, df$status)~1)
+plot(ekm, mark.time=F, conf.int=F, xlab="Resíduos",
+ylab="S(e) estimada")
+res_cox<-sort(res_cox)
+exp1<-exp(-res_cox)
+lines(res_cox, exp1, lty=3)
+
+legend(1, 0.8, lty=c(1,3), c("Kaplan Meier","Exponencial(1)"),
+lwd=1, bty="n", cex=0.7)
+st<-ekm$surv
+t<-ekm$time
+sexp1<-exp(-t)
+plot(st, sexp1, xlab="S(e): Kaplan-Meier",
+ylab= "S(e): Exponencial(1)", pch=16)
+```
+
+Assim dado texto e texto, podemos notar que visualmente não existem evidências de
+não adequação do ajuste.
 
 ```{r}
 ##### Avalia ̧c~ao dos res ́ıduos - Pontos at ́ıpicos
-ggcoxdiagnostics(fit, type = "deviance",
-linear.predictions = TRUE, ggtheme = theme_bw())
+ggcoxdiagnostics(fit, type = "scaledsch", linear.predictions = F,
+ggtheme = theme_bw())
 ```
 
 
@@ -282,7 +323,7 @@ linear.predictions = TRUE, ggtheme = theme_bw())
 
 Uma grande vantagem que o modelo de Regressão de Cox dispõe é a interpretabilidade, pois como indicado em @colosimo2006analise se tivermos taxas de falhas proporcionais conseguimos verificar que o efeito das covariáveis é acelerar ou desacelerar a taxa de falha.
 
-Nesse caso um valor de `1` para  a covariável `GenderMas`  indica que o personagem é do sexo masculino, assim dado seu coenficiente estimado, temos que o risco de falha para um personagem masculino é `r round(coefs[1, 2], 3)` maior que para um personagem feminino, um número que formaliza em termos de taxa de falha  o que foi visto na figura NN pela função de sobrevivência.
+Nesse caso um valor de `1` para  a covariável `GenderMas`  indica que o personagem é do sexo masculino, assim dado seu coeficiente estimado, temos que o risco de falha para um personagem masculino é `r round(coefs[1, 2], 3)` maior que para um personagem feminino, um número que formaliza em termos de taxa de falha  o que foi visto na figura NN pela função de sobrevivência.
 
 Na situação da covariável `NobilityNobre` que indica se o personagem é um nobre, temos um efeito de desaceleração da taxa de falha, pois seu coeficiente associado é menor do que 1, outra fato esperado dado o o comportamento da função de sobrevivência na figura NN.
 
