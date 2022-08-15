@@ -125,8 +125,8 @@ Aqui, o nosso evento de interesse é o **tempo para morte** de um personagem, e 
 
 ## Metodologia da criação do banco de dados
 
-As crônicas de gelo  e fogo apesar de possuir "apenas" 5 livros é uma obra extensa 
-possuindo uma quantidade enorme de personagens, dessa maneira fica claro que o número de personagens que morre é muito menor que os que não morrem, portanto para coesão 
+As crônicas de gelo  e fogo apesar de possuirem "apenas" 5 livros é uma obra extensa 
+dispondo de uma quantidade enorme de personagens, dessa maneira fica claro que o número de personagens que morre é muito menor que os que não morrem, portanto para coesão 
 da análise foi removido  todos os indivíduos que não estavam associados a alguma família relevante ^[Onde relevante é definido arbitrariamente pelo  autor que vos escreve.].
 O banco de dados em sua forma "original" não está pronto para a análise de sobrevivência, pois é necessário uma variável que informe se  o tempo observado foi de censura ou do evento de interesse, assim essa variável foi construída para análise, onde o banco modificado pode ser encontrado [\textcolor{red}{aqui}](https://github.com/AlissonRP/SURV/blob/master/data/gotsurv.csv).
 
@@ -230,10 +230,10 @@ df <- df |>
 
 A função de sobrevivência $S$ nos informa qual a probabilidade de uma observação vir a ter o evento de interesse a partir do tempo $t$, em termos formais podemos definir como:
 \begin{align}
-    S(t) = P(T > t) = 1 - F(t)
+    S(t) = P(T > t) 
 \end{align}
 desse modo  podemos avaliar a função de sobrevivência estratificada por grupos, avaliando tanto em termos visuais e inferenciais a possibilidade de existir diferença em $S$. 
-Uma quantidade também interessante e útil mais a frente é função taxa de falha acumulada $\Lambda$, que pode ser definida como:
+Uma quantidade também interessante e útil mais a frente é a função taxa de falha acumulada $\Lambda$, que pode ser definida como:
 \begin{equation}
     \Lambda(t) = -\log(S(t)) (\#eq:rate)
 \end{equation}
@@ -305,7 +305,7 @@ df |>
 Dessa forma a Figura \@ref(fig:survass1) nos indica que a vida de um Stark não é fácil, a cada livro lançado até o livro 3, a sobrevivência para um Stark despenca, e no livro 3 ^[Red wedding para os mais familiarizados.] podemos ver a maior queda. 
 Podemos notar também que os Baratheon iniciam com uma sobrevivência superior ao Lannister, mas é um comportamento que não se mantém a partir do livro 2.
 
-Podemos além disso avaliar a sobrevivência para o Povo Livre, a Patrulha da Noite e a união das famílias que agora são denotadas por "outros", o que pode ser observado pela Figura
+Além disso é proveitoso avaliar a sobrevivência para o Povo Livre, a Patrulha da Noite e a união das famílias que agora são denotadas por "outros", o que pode ser observado pela Figura
 \@ref(fig:survass2).
 
 
@@ -321,7 +321,7 @@ df |>
   plot_surv(ci = F)
 ```
 
-Notamos que até o livro 2 temos um comportamento semelhante, porém o Povo Livre e a Patrulha da Noite tomam um grande abate no livro 3 ^[Para os íntimos: Exploração além das muralhas.], e como era de se esperar, no livro 5 o grupo dos "outros" formado somente por nobres mantém a maior sobrevivência.
+Notamos que até o livro 2 temos um comportamento semelhante, porém o Povo Livre e a Patrulha da Noite recebem um grande abate no livro 3 ^[Para os íntimos: Exploração além das muralhas.], e como era de se esperar, no livro 5 o grupo dos "outros" formado somente por nobres mantém a maior sobrevivência.
 
 Faz-se então importante realizarmos um teste de hipóteses para avaliar as 
 decorrências
@@ -393,7 +393,7 @@ está situado seu tempo de sobrevivência pode ser diferente.
 ## Modelo de regressão de Cox
 Vamos nessa seção ajustar um modelo de regressão de Cox a qual foi 
 introduzido pela primeira vez em @cox1972regression. Onde 
-vamos utilizar como covariáveis, o sexo do personagem e se é da nobreza, porém antes de ajustar o modelo precisamos verificar se o pressuposto de taxa de falha proporcionais não foi quebrado. Dessa maneira devemos primeiro realizar um teste
+vamos utilizar como covariáveis, o sexo do personagem e se é da nobreza, porém antes de ajustar o modelo precisamos verificar se o pressuposto de taxa de falha proporcionais não foi quebrado. Dessa maneira vamos primeiramente realizar um teste de hipótese
 para verificar se existem evidências de não proporcionalidade, em termos gerais
 o teste possui a seguinte hipótese:
 $$
@@ -415,7 +415,7 @@ l <- cox.zph(fit, transform = "identity")
 Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Sexo, Nobreza, respectivamente. Portanto indicando que não existem indícios
 de falha no pressuposto.
 
-Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico
+Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico.
 
 ## Ajuste do modelo
 O modelo de Regressão de Cox depende de parâmetros $\beta's$ desconhecidos e nessa abordagem constantes, que medem o efeito das covariáveis sobre a função taxa de falha, entretanto na prática possuímos apenas algumas observações ao nosso alcance, nesse caso, somente os personagens a qual o autor citou nos livros, mas existem outros no universo a qual o nome não foi mencionado, assim, devemos utilizar algum método de estimação  para encontrar 
@@ -453,7 +453,7 @@ Aqui vamos utilizar o Resíduo de Cox-Snell ($e$) a qual foi definido em @cox196
 resíduo se o modelo estiver corretamente ajustado pode ser visto como uma amostra
 censurada de uma distribuição exponencial com parâmetro igual a 1, assim o 
 gráfico de $e_i$ versus $\Lambda(e_i)$, vai ser uma reta com inclinação 1, pois
-dada a definição de $\Lambda$ em \@ref(eq:rate), e sabendo que a função acumulada de uma 
+dada a definição de $\Lambda$ em \@ref(eq:rate), e sabendo que a função de sobrevivência de uma 
 váriavel aleatória $T$ com distribuição exponencial com parâmetro igual a 1 é dada por $\exp(-t)$, por consequência temos:
 
 \begin{align}
@@ -580,7 +580,7 @@ Notamos tanto visualmente quanto inferencialmente que os personagens femininos
 possuem uma função de sobrevivência superior que as dos masculinos, e a 
 discrepância torna-se ainda maior quando coloca-se personagens femininos nobres.
 
-Presenciamos que um modelo de Regressão de Cox utilizando como covariáveis se
+Presenciamos que o modelo de Regressão de Cox utilizando como covariáveis se
 o personagem é do sexo masculino e se é nobre se ajustou corretamente, pois não
 temos evidências de falha no pressuposto de taxa de falha proporcional, assim como
 análise visuais não forneceram indícios de não adequação. Outra forte evidência de 
