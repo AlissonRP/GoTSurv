@@ -2,15 +2,15 @@
 title: "As Crônicas da Sobrevivência"
 author: "Alisson Rosa"
 abstract: "A maioria das análises ^[Podem ser consultadas [aqui](https://www.kaggle.com/datasets/mylesoneill/game-of-thrones/code?datasetId=43&sortBy=voteCount)] empregando o banco de dados  utilizado nesse trabalho remove
-as observações que não tiverem o evento de interesse, isso evidentemente é um 
-empreendimento equivocado, pois tais observações também carregam informações 
+as observações que não tiverem o evento de interesse, isso evidentemente é uma 
+ação equivocada, pois tais observações também carregam informações 
 importantes, 
 o que foi desenvolvido no presente trabalho portanto é uma análise sobrevivência
 do tempo de vida
 dos personagens
 dos livros As Crônicas de Gelo e Fogo escritos por George R. R. Martin. Foi 
 avaliado
-as funções de sobrevivência para as as variáveis selecionadas, juntamente com um
+as funções de sobrevivência para  as variáveis selecionadas, juntamente com um
 modelo de regressão de Cox para avaliar influência das covariáveis na função taxa
 de falha, toda análise foi desenvolvida usando a linguagem R @R e o código elaborado
 pode ser consultado [aqui](https://github.com/AlissonRP/SURV)."
@@ -188,7 +188,7 @@ df |>
 
 Notamos o predomínio na quantidade de personagens masculinos, o comportamento
 de mortos segue a proporção da quantidade. 
-Pela \@ref(fig:fig3) temos a quantidade de personagens por classe social, junto com
+Pela Figura \@ref(fig:fig3) temos a quantidade de personagens por classe social, junto com
 a quantidade de mortos por classe.
 
 ```{r fig3, fig.height = 4.1, fig.cap="Proporção de personagens por classe social e quantidade de mortos"}
@@ -415,7 +415,7 @@ l <- cox.zph(fit, transform = "identity")
 Realizando o teste temos como p-valor associado  0.067, 0.879  para as variáveis Sexo, Nobreza, respectivamente. Portanto indicando que não existem indícios
 de falha no pressuposto.
 
-Vamos agora então ajustar o modelo e fazer algumas análise de diagnóstico.
+Vamos agora então ajustar o modelo e fazer algumas análises de diagnóstico.
 
 ## Ajuste do modelo
 O modelo de Regressão de Cox depende de parâmetros $\beta's$ desconhecidos e nessa abordagem constantes, que medem o efeito das covariáveis sobre a função taxa de falha, entretanto na prática possuímos apenas algumas observações ao nosso alcance, nesse caso, somente os personagens a qual o autor citou nos livros, mas existem outros no universo a qual o nome não foi mencionado, assim, devemos utilizar algum método de estimação  para encontrar 
@@ -568,7 +568,7 @@ menor do que um masculino comum ao longo dos livros.
 
 
 
-Contemplamos a fundo o comportamento da personagens na obra 
+Contemplamos a fundo o comportamento dos personagens na obra 
 As Crônicas de Gelo e Fogo, onde notamos que a maioria dos personagens é do sexo 
 masculino, e também os que mais morrem são masculinos, dentro das classes sociais 
 os personagens que mais morrem não são nobres, apesar da quantidade de nobres 
