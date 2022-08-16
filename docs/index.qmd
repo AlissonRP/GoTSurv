@@ -77,11 +77,11 @@ df <- read_csv("data/gotsurv.csv") |>
 # Sumário
 
 ::: {.incremental}
-- Descrição do dados.
+- Descrição dos dados.
 
 <br />
 
-- Funções de sobrevivência por grupos.
+- Função de sobrevivência por grupos.
 
 
 <br />
@@ -180,7 +180,7 @@ df <- df |>
   )))
 ```
 
-## Sobbrevivência por sexo
+## Sobrevivência por sexo
 
 ```{r survsex}
 survfit(Surv(time_death, status) ~ Gender,
