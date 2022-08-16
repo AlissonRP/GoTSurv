@@ -74,19 +74,19 @@ df <- read_csv("data/gotsurv.csv") |>
 ```
 
 
-## Sumário
+# Sumário
 
 ::: {.incremental}
-- Descrição do dados
+- Descrição do dados.
 
 <br />
 
-- Funções de sobrevivência por grupos
+- Funções de sobrevivência por grupos.
 
 
 <br />
 
-- Modelo de Regressão
+- Modelo de Regressão.
 :::
 
 
@@ -94,12 +94,13 @@ df <- read_csv("data/gotsurv.csv") |>
 
 # Banco de dados
 
-* Banco de dados sobre As crônicas de Gelo e fogo
+## Banco de dados
+* Banco de dados sobre As crônicas de Gelo e fogo.
 
 ::: {.incremental}
 <br />
 
-* Possivelmente as coisas poderiam dar errado
+* Possivelmente as coisas poderiam dar errado.
 
 <br />
 
@@ -199,7 +200,7 @@ survfit(Surv(time_death, status) ~ Nobility + Gender,
 ```
 
 
-## Sobrevivência dos Starks e mais algumas famílias
+## Sobrevivência dos Starks e mais
 
 
 ```{r survass1}
@@ -235,7 +236,13 @@ df |>
 
 ## Taxa de falha proporcional
 
-Realizando o teste temos como p-valor associado  0.067 e 0.879  para as variáveis Sexo e Nobreza, respectivamente.
+* Realizando o teste temos como p-valor associado  0.067 e 0.879  para as variáveis Sexo e Nobreza, respectivamente.
+
+<br />
+
+* Não funcionou as associações como covariável.
+
+
 
 
 ## Resumo do ajuste
@@ -346,16 +353,16 @@ title("Risco acumulado")
 # Conclusão
 
 ::: {.incremental}
-- Não é fácil ser homem nos livros
+- Não é fácil ser homem nos livros.
 
 <br />
 
-- Não é fácil ser de família não nobre
+- Não é fácil ser de família não nobre.
 
 
 <br />
 
-- O Modelo de Regressão de Cox parece ser uma boa opção
+- O Modelo de Regressão de Cox parece ser uma boa opção.
 :::
 
 ::: footer
