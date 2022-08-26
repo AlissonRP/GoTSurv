@@ -8,8 +8,8 @@ importantes,
 o que foi desenvolvido no presente trabalho portanto é uma análise sobrevivência
 do tempo de vida
 dos personagens
-dos livros As Crônicas de Gelo e Fogo escritos por George R. R. Martin. Foi 
-avaliado
+dos livros As Crônicas de Gelo e Fogo escritos por George R. R. Martin. Foram 
+avaliadas
 as funções de sobrevivência para  as variáveis selecionadas, juntamente com um
 modelo de regressão de Cox para avaliar influência das covariáveis na função taxa
 de falha, toda análise foi desenvolvida usando a linguagem R @R e o código elaborado
@@ -102,7 +102,7 @@ df <- read_csv("data/gotsurv.csv") |>
 
 
 
-As Crônicas de Gelo e Fogo  é uma série de livros de fantasia épica escrita pelo romancista e roteirista norte-americano George R. R. Martin. Martin começou a desenvolvê-la em 1991 e o primeiro volume foi lançado em 1996. Originalmente concebida para ser uma trilogia, a saga agora (2022) consiste em cinco volumes publicados, com mais dois planejados. Há também três contos derivados e algumas novelas que consistem de resumos dos romances principais.
+As Crônicas de Gelo e Fogo  são uma série de livros de fantasia épica escrita pelo romancista e roteirista norte-americano George R. R. Martin. Martin começou a desenvolvê-la em 1991 e o primeiro volume foi lançado em 1996. Originalmente concebida para ser uma trilogia, a saga agora (2022) consiste em cinco volumes publicados, com mais dois planejados. Há também três contos derivados e algumas novelas que consistem de resumos dos romances principais.
 
 Há três argumentos principais na história, que se tornam cada vez mais interligados: a crônica de uma guerra civil dinástica entre várias famílias concorrentes pelo controle dos Sete Reinos; a ameaça crescente das criaturas sobrenaturais, que habitam além de uma imensa muralha de gelo ao Norte; e a ambição de Daenerys Targaryen, a filha exilada de um rei assassinado em uma outra guerra civil treze anos antes, prestes a voltar à sua terra e reivindicar seu trono de direito.
 
@@ -119,8 +119,10 @@ Vamos nesse breve ensaio fazer uma análise de sobrevivência estatística dos p
 
 ## Análise de Sobrevivência
 
-A análise de sobrevivência difere dos métodos estatísticos clássicos pois temos dados censurados, que são observações  a qual o evento de interesse por algum motivo não pode ser mensurado. 
-Aqui, o nosso evento de interesse é o **tempo para morte** de um personagem, e se o personagem não faleceu, será classificado como censurado, e seu respectivo tempo de censura será o último livro que apareceu. Assim, nossa variável tempo ($T$) possui somente 5 valores possíveis, que são respectivamente a numeração dos livros.
+A análise de sobrevivência difere dos métodos estatísticos clássicos pois temos
+a presençça de
+dados censurados, que são observações  a qual o evento de interesse por algum motivo não pode ser mensurado. 
+Aqui, o  evento de interesse é o **tempo até a morte** de um personagem, e se o personagem não faleceu, será classificado como censurado, e seu respectivo tempo de censura será o último livro que apareceu. Assim, nossa variável tempo ($T$) possui somente 5 valores possíveis, que corresponde respectivamente a numeração dos livros.
 
 
 ## Metodologia da criação do banco de dados
@@ -164,10 +166,10 @@ death |>
 
 
 
-Notamos portanto que a proporção de personagens mortos não segue a proporção de quantidade de membros das associações, pois os Windlings (Povo Livre em portugûes) é a associação que teve mais baixas e associação que mais tem membros é a Night's Watch (Patrulha da Noite em português).
-Note que três famílias se destacam tanto em quantidade de membros e em mortos, sendo elas os Starks, os Lannister e os Baratheon. Os Greyjoy também estão nas famílias com mais membros, estão em 4 lugar, entretanto tal posição não se mantém na quantidade de mortos.
+Notamos portanto que a proporção de personagens mortos não segue a proporção de quantidade de membros das associações, pois os Windlings (Povo Livre em português) é a associação que teve mais baixas e associação que mais tem membros é a Night's Watch (Patrulha da Noite em português).
+Note que três famílias se destacam tanto em quantidade de membros e em mortos, sendo elas os Starks, os Lannister e os Baratheon. Os Greyjoy também estão nas famílias com mais membros, estão em 4  lugar, entretanto tal posição não se mantém na quantidade de mortos.
 
-Dado o que foi comentado, é interessante juntar algumas famílias que possuem poucos membros em um outro grupo para análise ser mais focada, assim vamos agrupar as casas Martell, Tully, Tyrell, Arryn em um grupo chamado de "outros", vale ressaltar que os Targaryen também possuem poucos membros, porém são peça chave da obra.
+Dado o que foi comentado, é interessante juntar algumas famílias que possuem poucos membros em um outro grupo para a análise ser mais focada, assim vamos agrupar as casas Martell, Tully, Tyrell, Arryn em um grupo chamado de "outros", vale ressaltar que os Targaryen também possuem poucos membros, porém são peça chave da obra.
 
 Pela Figura \@ref(fig:fig2), podemos averiguar a proporção de personagens de cada
 sexo na obra,  junto com a quantidade de mortos por sexo.
@@ -188,8 +190,8 @@ df |>
 
 Notamos o predomínio na quantidade de personagens masculinos, o comportamento
 de mortos segue a proporção da quantidade. 
-Pela Figura \@ref(fig:fig3) temos a quantidade de personagens por classe social, junto com
-a quantidade de mortos por classe.
+Pela Figura \@ref(fig:fig3) são apresentadas as quantidades de personagens por 
+classe social e de mortos por classe social.
 
 ```{r fig3, fig.height = 4.1, fig.cap="Proporção de personagens por classe social e quantidade de mortos"}
 df |>
@@ -222,8 +224,7 @@ df <- df |>
 
 
 
-
-\section{\centering Estimando Quantidades Básicas}
+## Estimando a Sobrevivência
 
 
 
@@ -240,7 +241,7 @@ Uma quantidade também interessante e útil mais a frente é a função taxa de 
 
 
 
-## Estimando a Sobrevivência
+
 Sabemos que a proporção de personagens do sexo feminino é de apenas aproximadamente $16$%, desse modo uma pergunta a se fazer é se existe diferença na sobrevivência entre os sexos, o que pode ser 
 avaliado pela Figura \@ref(fig:survsex)
 
@@ -449,7 +450,7 @@ acontece para um personagem nobre, dado a exponencial do coeficiente estimado é
 
 O modelo de regressão de Cox não se adequa a qualquer situação, assim como qualquer
 modelo estatístico clássico devemos fazer uma avaliação geral da adequação. 
-Aqui vamos utilizar o Resíduo de Cox-Snell ($e$) a qual foi definido em @cox1968, tal 
+Aqui vamos utilizar o Resíduo de Cox-Snell ($e$) o qual foi definido em @cox1968, tal 
 resíduo se o modelo estiver corretamente ajustado pode ser visto como uma amostra
 censurada de uma distribuição exponencial com parâmetro igual a 1, assim o 
 gráfico de $e_i$ versus $\Lambda(e_i)$, vai ser uma reta com inclinação 1, pois
@@ -462,7 +463,7 @@ váriavel aleatória $T$ com distribuição exponencial com parâmetro igual a 1
 
 Dessa maneira, podemos analisar tal comportamento  pela Figura \@ref(fig:fig-sub).
 
-```{r fig-sub, fig.cap="Resíduos de Cox-Snell", fig.subcap=c('t', 'b')}
+```{r fig-sub, fig.cap="Gráficos doss resíduos de Cox-Snell para avaliação da adequação do modelo ajustado", fig.subcap=c('t', 'b')}
 ### Obter o res ́ıduo
 par(mfrow = c(1, 2), cex = 0.8)
 resm <- resid(fit, type = "martingale")
@@ -499,9 +500,9 @@ semelhantes enquanto na Figura á direita dispomos de  um comportamento que se  
 
 ## Interpretação dos coeficientes
 
-Uma grande vantagem que o modelo de Regressão de Cox dispõe é a interpretabilidade, pois como indicado em @colosimo2006analise se tivermos taxas de falhas proporcionais, conseguimos verificar que o efeito das covariáveis é acelerar ou desacelerar a taxa de falha.
+Uma grande vantagem que o modelo de Regressão de Cox dispõe é a interpretabilidade, pois como indicado em @colosimo2006analise se tivermos taxas de falhas proporcionais, conseguimos verificar se o efeito das covariáveis é acelerar ou desacelerar a taxa de falha.
 
-Nesse caso um valor de `1` para  a covariável `GenderMas`  indica que o personagem é do sexo masculino, assim dado seu coeficiente estimado, temos que o risco de falha para um personagem masculino é `r round(coefs[1, 2], 3)` maior que para um personagem feminino, um número que formaliza em termos de taxa de falha  o que foi visto na Figura \@ref(fig:survsex) pela função de sobrevivência.
+Nesse caso um valor de `1` para  a covariável `GenderMas`  indica que o personagem é do sexo masculino, assim dado seu coeficiente estimado, temos que o risco de falha para um personagem masculino é `r round(coefs[1, 2], 3)` vezes maior que para um personagem feminino, um número que formaliza em termos de taxa de falha  o que foi visto na Figura \@ref(fig:survsex) pela função de sobrevivência.
 
 Na situação da covariável `NobilityNobre` que indica se o personagem é um nobre, temos um efeito de desaceleração da taxa de falha, pois seu coeficiente associado é menor do que 0, outra fato esperado dado o o comportamento da função de sobrevivência na Figura \@ref(fig:survclass).
 
@@ -510,7 +511,7 @@ Na situação da covariável `NobilityNobre` que indica se o personagem é um no
 
 ## Revisitando gráficos importantes
 Vamos aqui revisitar algumas quantidades anteriores, porém agora sobre a 
-estrutura do modelo de Regressão de Cox  a figura \@ref(fig:finalfig) nos fornece
+estrutura do modelo de Regressão de Cox  a Figura \@ref(fig:finalfig) nos fornece
 a função de sobrevivência e o risco acumulado.
 
 ```{r finalfig, fig.cap="Função de Sobrevivência e Risco acumulado utilizando o modelo"}
@@ -580,7 +581,7 @@ Notamos tanto visualmente quanto inferencialmente que os personagens femininos
 possuem uma função de sobrevivência superior que as dos masculinos, e a 
 discrepância torna-se ainda maior quando coloca-se personagens femininos nobres.
 
-Presenciamos que o modelo de Regressão de Cox utilizando como covariáveis se
+O modelo de Regressão de Cox utilizando como covariáveis se
 o personagem é do sexo masculino e se é nobre se ajustou corretamente, pois não
 temos evidências de falha no pressuposto de taxa de falha proporcional, assim como
 análise visuais não forneceram indícios de não adequação. Outra forte evidência de 
